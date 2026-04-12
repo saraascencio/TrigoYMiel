@@ -1,10 +1,9 @@
 //
-//  SupportView.swift
-//  TrigoYMiel
+// SupportView.swift
+// TrigoYMiel
 //
-//  Created by Sara Ascencio on 31/3/26.
+// Created by Sara Ascencio on 31/3/26.
 //
-
 import SwiftUI
 import PhotosUI
 
@@ -12,34 +11,28 @@ import PhotosUI
 // Pantalla de Contacto y ayuda del cliente.
 // Figura 27 del documento de interfaces.
 //
-// Estructura visual:
-//  - NavigationBar: "← Catálogo" | ícono perfil (menú) | ícono carrito
-//  - Header café oscuro con mensaje de bienvenida
-//  - Selector de canal de contacto (Chat | Llamada | Correo)
-//  - Selector de tipo de incidencia (IncidenceTypePickerView)
-//  - Selector de pedido relacionado
-//  - Campo de descripción libre (máx 500 caracteres)
-//  - Botón adjuntar foto
-//  - Botón enviar (al fondo o inline)
+// Mejoras aplicadas SOLO sobre tu código original:
+// - Los 3 cuadros de contacto (Chat / Llamada / Correo) ahora tienen **exactamente el mismo tamaño** (ancho y alto iguales)
+// - Todos los textos del formulario (etiquetas, nombres de canales, descripción, etc.) ahora son **negro** (no café)
+// - Header café con esquinas redondeadas
+// - Tarjetas de pedido y descripción con esquinas más suaves
+// - Todo centrado exactamente como en el prototipo
+// - NO se cambió ningún color de assets (ColorPrimary, ColorSecondary, etc.)
 
 struct SupportView: View {
-
     @StateObject var viewModel: SupportViewModel
     @State private var showProfileMenu = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
                 Color("ColorBackground")
                     .ignoresSafeArea()
-
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-
                         // MARK: Header café
                         headerCard
-
                         // MARK: Contenido del formulario
                         VStack(alignment: .leading, spacing: 20) {
                             channelSection
@@ -74,7 +67,6 @@ struct SupportView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
-            // Sincronizar PhotosPickerItem → Data
             .onChange(of: selectedPhotoItem) { newItem in
                 Task {
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -84,19 +76,17 @@ struct SupportView: View {
             }
         }
     }
-
+    
     // MARK: - Header
     private var headerCard: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "info.circle")
                 .font(.system(size: 18))
                 .foregroundColor(.white)
-
             VStack(alignment: .leading, spacing: 4) {
                 Text("¿Tienes alguna consulta o necesitas ayuda?")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)
-
                 Text("Cuéntanos, te escuchamos")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.85))
@@ -104,27 +94,29 @@ struct SupportView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("ColorPrimary"))
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color("ColorPrimary"))
+        )
         .padding(.horizontal, 16)
         .padding(.top, 12)
     }
-
-    // MARK: - Canal de contacto
+    
+    // MARK: - Canal de contacto (cuadros del MISMO tamaño)
     private var channelSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel("Elige como contactarnos")
-
-            HStack(spacing: 24) {
+            HStack(spacing: 16) {
                 ForEach(ContactChannel.allCases, id: \.self) { channel in
                     channelButton(channel)
+                        .frame(maxWidth: .infinity)   // ← Fuerza mismo ancho
                 }
             }
         }
     }
-
+    
     private func channelButton(_ channel: ContactChannel) -> some View {
         let isSelected = viewModel.selectedChannel == channel
-
         return Button {
             viewModel.selectedChannel = channel
         } label: {
@@ -134,91 +126,22 @@ struct SupportView: View {
                     .foregroundColor(isSelected
                                      ? Color("ColorSecondary")
                                      : Color("ColorPrimary"))
-
                 Text(channel.displayName)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color("ColorText"))
-
+                    .foregroundColor(.black)          // ← Negro (no café)
                 if let note = channel.note {
                     Text(note)
                         .font(.system(size: 10))
-                        .foregroundColor(Color("ColorText").opacity(0.5))
+                        .foregroundColor(.black.opacity(0.5))
                 }
             }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func channelIcon(_ channel: ContactChannel) -> String {
-        switch channel {
-        case .chat:  return "paperplane"
-        case .phone: return "phone"
-        case .email: return "envelope"
-        }
-    }
-
-    // MARK: - Tipo de incidencia
-    private var incidenceTypeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("Tipo de incidencia")
-            IncidenceTypePickerView(selectedType: $viewModel.selectedType)
-        }
-    }
-
-    // MARK: - Pedido relacionado
-    private var orderSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("Seleccionar pedido relacionado")
-
-            if viewModel.orders.isEmpty {
-                Text("No tienes pedidos disponibles.")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color("ColorText").opacity(0.5))
-            } else {
-                ForEach(viewModel.orders) { order in
-                    orderCard(order)
-                }
-            }
-        }
-    }
-
-    private func orderCard(_ order: Order) -> some View {
-        let isSelected = viewModel.selectedOrder?.id == order.id
-
-        return Button {
-            viewModel.selectedOrder = order
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        // Ícono de pedido para recoger en tienda
-                        Image(systemName: "bag")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("ColorPrimary"))
-
-                        Text("ID: \(order.displayId)")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color("ColorText"))
-                    }
-
-                    Text("Total: \(order.formattedTotal)")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color("ColorText").opacity(0.7))
-                }
-
-                Spacer()
-
-                // Botón "..."
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color("ColorPrimary"))
-            }
-            .padding(12)
+            .frame(maxWidth: .infinity)
+            .frame(height: 110)                       // ← Fuerza mismo alto para los 3 cuadros
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 12)
                     .fill(Color.white)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(isSelected
                                     ? Color("ColorSecondary")
                                     : Color("ColorPrimary").opacity(0.2),
@@ -228,54 +151,121 @@ struct SupportView: View {
         }
         .buttonStyle(.plain)
     }
-
+    
+    private func channelIcon(_ channel: ContactChannel) -> String {
+        switch channel {
+        case .chat: return "paperplane"
+        case .phone: return "phone"
+        case .email: return "envelope"
+        }
+    }
+    
+    // MARK: - Tipo de incidencia
+    private var incidenceTypeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("Tipo de incidencia")
+            IncidenceTypePickerView(selectedType: $viewModel.selectedType)
+        }
+    }
+    
+    // MARK: - Pedido relacionado
+    private var orderSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("Seleccionar pedido relacionado")
+            if viewModel.orders.isEmpty {
+                Text("No tienes pedidos disponibles.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.black.opacity(0.5))
+            } else {
+                ForEach(viewModel.orders) { order in
+                    orderCard(order)
+                }
+            }
+        }
+    }
+    
+    private func orderCard(_ order: Order) -> some View {
+        let isSelected = viewModel.selectedOrder?.id == order.id
+        return Button {
+            viewModel.selectedOrder = order
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "bag")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color("ColorPrimary"))
+                        Text("ID: \(order.displayId)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.black)
+                    }
+                    Text("Total: \(order.formattedTotal)")
+                        .font(.system(size: 13))
+                        .foregroundColor(.black.opacity(0.7))
+                }
+                Spacer()
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color("ColorPrimary"))
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(isSelected
+                                    ? Color("ColorSecondary")
+                                    : Color("ColorPrimary").opacity(0.2),
+                                    lineWidth: isSelected ? 2 : 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
     // MARK: - Descripción
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionLabel("Descripción")
-
             ZStack(alignment: .bottomTrailing) {
                 TextEditor(text: $viewModel.description)
                     .font(.system(size: 14))
-                    .foregroundColor(Color("ColorText"))
+                    .foregroundColor(.black)
                     .frame(minHeight: 100, maxHeight: 160)
                     .padding(8)
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 16)
                             .fill(Color.white)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: 16)
                                     .stroke(Color("ColorPrimary").opacity(0.2), lineWidth: 1)
                             )
                     )
                     .onChange(of: viewModel.description) { newValue in
-                        // Limitar a 500 caracteres
                         if newValue.count > viewModel.descriptionLimit {
                             viewModel.description = String(newValue.prefix(viewModel.descriptionLimit))
                         }
                     }
-                    // Placeholder manual
                     .overlay(alignment: .topLeading) {
                         if viewModel.description.isEmpty {
                             Text("Describe que ha ocurrido con tu pedido")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color("ColorText").opacity(0.35))
+                                .foregroundColor(.black.opacity(0.35))
                                 .padding(.top, 16)
                                 .padding(.leading, 12)
                                 .allowsHitTesting(false)
                         }
                     }
-
-                // Contador
                 Text("\(viewModel.description.count)/\(viewModel.descriptionLimit)")
                     .font(.system(size: 11))
-                    .foregroundColor(Color("ColorText").opacity(0.4))
+                    .foregroundColor(.black.opacity(0.4))
                     .padding(.trailing, 10)
                     .padding(.bottom, 8)
             }
         }
     }
-
+    
     // MARK: - Adjuntar foto
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -286,7 +276,6 @@ struct SupportView: View {
                     Image(systemName: "photo.badge.plus")
                         .font(.system(size: 16))
                         .foregroundColor(Color("ColorPrimary"))
-
                     Text(viewModel.selectedImageData == nil
                          ? "Adjuntar foto"
                          : "Foto adjunta ✓")
@@ -295,8 +284,6 @@ struct SupportView: View {
                 }
             }
             .buttonStyle(.plain)
-
-            // Miniatura de la imagen seleccionada
             if let data = viewModel.selectedImageData,
                let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
@@ -318,7 +305,7 @@ struct SupportView: View {
             }
         }
     }
-
+    
     // MARK: - Botón enviar
     private var submitButton: some View {
         Button {
@@ -342,23 +329,20 @@ struct SupportView: View {
         .disabled(viewModel.isLoading)
         .padding(.top, 8)
     }
-
+    
     // MARK: - Toolbar
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: 16) {
-
-                // Ícono de perfil con menú desplegable (Frame 18)
                 Menu {
                     Button {
-                        // Acción: cerrar sesión — el coordinator escucha este cambio
+                        // Acción: cerrar sesión
                     } label: {
                         Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
                     }
-
                     Button {
-                        // Acción: ya estás en soporte, no hace nada
+                        // Acción: ya estás en soporte
                     } label: {
                         Label("Contacta a soporte", systemImage: "message")
                     }
@@ -367,10 +351,8 @@ struct SupportView: View {
                         .font(.system(size: 20))
                         .foregroundColor(Color("ColorPrimary"))
                 }
-
-                // Ícono carrito
                 Button {
-                    // Navegar al carrito — coordinator
+                    // Navegar al carrito
                 } label: {
                     Image(systemName: "cart")
                         .font(.system(size: 20))
@@ -379,15 +361,14 @@ struct SupportView: View {
             }
         }
     }
-
-    // MARK: - Helper label
+    
+    // MARK: - Helper label (ahora negro)
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(Color("ColorText"))
+            .foregroundColor(.black)
     }
 }
-
 
 // MARK: - Preview
 struct SupportView_Previews: PreviewProvider {
