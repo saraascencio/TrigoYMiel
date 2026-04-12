@@ -8,25 +8,21 @@ import SwiftUI
 import Combine
 import FirebaseAuth
 // MARK: - AppCoordinator
-// Lee el User post-login y bifurca a ClientTabCoordinator o AdminTabCoordinator.
-// También maneja el estado de sesión al arrancar la app.
+
 
 final class AppCoordinator: ObservableObject {
-
+    
     @Published var currentUser: User?
     @Published var isLoading: Bool = true
-
+    
     private let diContainer: AppDIContainer
-
+    
     init(diContainer: AppDIContainer) {
         self.diContainer = diContainer
     }
-
+    
     // MARK: - Session check al arrancar
     func checkExistingSession() async {
-        //try? FirestoreClient.shared.auth.signOut()
-        //descomentar para probar login y registro
-        
         async let minimumDelay: () = Task.sleep(nanoseconds: 2_300_000_000)
         
         do {
@@ -38,7 +34,7 @@ final class AppCoordinator: ObservableObject {
                 }
                 return
             }
-
+            
             let user = try await AuthRepositoryImpl().currentUser()
             try? await minimumDelay
             await MainActor.run {
@@ -54,12 +50,26 @@ final class AppCoordinator: ObservableObject {
         }
     }
     // MARK: - Callbacks
-
+    
     func onLoginSuccess(_ user: User) {
         currentUser = user
     }
-
+    
     func onLogout() {
         currentUser = nil
+    }
+    
+    func handleLogout() async {
+        do {
+            try await AuthRepositoryImpl().logout()
+            await MainActor.run {
+                currentUser = nil
+            }
+        } catch {
+            // Si falla igual limpiamos la sesión local
+            await MainActor.run {
+                currentUser = nil
+            }
+        }
     }
 }
