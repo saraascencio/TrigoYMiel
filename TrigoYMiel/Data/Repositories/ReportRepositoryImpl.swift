@@ -19,7 +19,6 @@ final class ReportRepositoryImpl: ReportRepository {
     }
 
     func exportReportAsPDF(report: SalesReport) throws -> Data {
-        // buildPDF corre en el MainActor, no necesita await
         try Self.buildPDF(from: report)
     }
 
@@ -27,38 +26,79 @@ final class ReportRepositoryImpl: ReportRepository {
 
     @MainActor
     private static func buildPDF(from report: SalesReport) throws -> Data {
+
         let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 pts
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
 
         return renderer.pdfData { ctx in
             ctx.beginPage()
 
-            let titleFont = UIFont.boldSystemFont(ofSize: 22)
+            let titleFont = UIFont.boldSystemFont(ofSize: 20)
             let bodyFont  = UIFont.systemFont(ofSize: 13)
             let smallFont = UIFont.systemFont(ofSize: 11)
 
-            let titleAttrs: [NSAttributedString.Key: Any] = [.font: titleFont, .foregroundColor: UIColor.black]
-            let bodyAttrs:  [NSAttributedString.Key: Any] = [.font: bodyFont,  .foregroundColor: UIColor.darkGray]
-            let smallAttrs: [NSAttributedString.Key: Any] = [.font: smallFont, .foregroundColor: UIColor.gray]
+            let titleAttrs: [NSAttributedString.Key: Any] = [
+                .font: titleFont,
+                .foregroundColor: UIColor.black
+            ]
 
-            var y: CGFloat = 44
+            let bodyAttrs: [NSAttributedString.Key: Any] = [
+                .font: bodyFont,
+                .foregroundColor: UIColor.darkGray
+            ]
 
-            // Header
-            draw("Reporte de Ventas — Trigo y Miel", attrs: titleAttrs, x: 40, y: &y, lineH: 32)
-            draw("Período: \(report.formattedPeriod)", attrs: smallAttrs, x: 40, y: &y, lineH: 24)
+            let smallAttrs: [NSAttributedString.Key: Any] = [
+                .font: smallFont,
+                .foregroundColor: UIColor.gray
+            ]
 
-            y += 12
+            var y: CGFloat = 40
 
-            // Summary
+            // MARK: - LOGO
+            if let logo = UIImage(named: "LogoTrigoYMiel") {
+                let logoRect = CGRect(x: 40, y: y, width: 50, height: 50)
+                logo.draw(in: logoRect)
+            }
+
+            // MARK: - TITLE (DINÁMICO)
+            let title = "Reporte de Ventas"
+            let periodTitle = report.formattedPeriod
+
+            let titleRect = CGRect(x: 100, y: y, width: 450, height: 25)
+            title.draw(in: titleRect, withAttributes: titleAttrs)
+
+            let periodRect = CGRect(x: 100, y: y + 25, width: 450, height: 20)
+            periodTitle.draw(in: periodRect, withAttributes: smallAttrs)
+
+            y += 80
+
+            // MARK: - FECHA GENERACIÓN
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "es_SV")
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+
+            let generated = "Generado: \(formatter.string(from: Date()))"
+            draw(generated, attrs: smallAttrs, x: 40, y: &y, lineH: 20)
+
+            y += 10
+
+            // MARK: - KPIs
             draw("Ingresos totales:   \(report.formattedRevenue)", attrs: bodyAttrs, x: 40, y: &y, lineH: 22)
-            draw("Total de pedidos:   \(report.totalOrders)",      attrs: bodyAttrs, x: 40, y: &y, lineH: 22)
-            draw("Unidades vendidas:  \(report.totalUnitsSold)",   attrs: bodyAttrs, x: 40, y: &y, lineH: 22)
+            draw("Total de pedidos:   \(report.totalOrders)", attrs: bodyAttrs, x: 40, y: &y, lineH: 22)
+            draw("Unidades vendidas:  \(report.totalUnitsSold)", attrs: bodyAttrs, x: 40, y: &y, lineH: 22)
 
-            y += 16
+            y += 20
+
+            // MARK: - TOP PRODUCTOS
             draw("Productos más vendidos", attrs: titleAttrs, x: 40, y: &y, lineH: 28)
 
             for (i, p) in report.topProducts.prefix(15).enumerated() {
-                if y > 780 { ctx.beginPage(); y = 44 }
+                if y > 780 {
+                    ctx.beginPage()
+                    y = 40
+                }
+
                 let line = "\(i + 1).  \(p.productName)  ·  \(p.unitsSold) uds  ·  \(p.formattedRevenue)"
                 draw(line, attrs: bodyAttrs, x: 40, y: &y, lineH: 20)
             }

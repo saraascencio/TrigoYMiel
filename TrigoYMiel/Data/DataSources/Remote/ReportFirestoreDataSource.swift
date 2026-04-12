@@ -13,37 +13,38 @@ final class ReportFirestoreDataSource {
     private let orderDataSource = OrderFirestoreDataSource()
     
     func getSalesReport(period: DateInterval) async throws -> SalesReport {
-        // Obtenemos solo los pedidos entregados en el período
+        
+        // Obtener pedidos entregados en el período
         let orders = try await orderDataSource.getDeliveredOrders(in: period)
         
-        // Cálculos principales
+        // Totales generales
         let totalRevenue = orders.reduce(0.0) { $0 + $1.total }
         let totalOrders = orders.count
         let totalUnitsSold = orders.flatMap { $0.items }.reduce(0) { $0 + $1.quantity }
         
-        // Agrupamos ventas por producto para obtener el top de productos vendidos
+        // TOP productos
         var salesMap: [String: (name: String, imageURL: String, units: Int, revenue: Double)] = [:]
         
         for order in orders {
             for item in order.items {
+                
+                let revenueToAdd = item.unitPriceSnap * Double(item.quantity)
+                
                 if var entry = salesMap[item.productId] {
-                    // Actualizar producto existente
                     entry.units += item.quantity
-                    entry.revenue += item.subtotal
+                    entry.revenue += revenueToAdd
                     salesMap[item.productId] = entry
                 } else {
-                    // Nuevo producto
                     salesMap[item.productId] = (
                         name: item.nameSnap,
                         imageURL: item.imageURLSnap,
                         units: item.quantity,
-                        revenue: item.subtotal
+                        revenue: revenueToAdd
                     )
                 }
             }
         }
         
-        // Convertir el mapa a array de ProductSalesSummary y ordenar por unidades vendidas
         let topProducts = salesMap
             .map { id, value in
                 ProductSalesSummary(
@@ -54,14 +55,48 @@ final class ReportFirestoreDataSource {
                     revenue: value.revenue
                 )
             }
-            .sorted { $0.unitsSold > $1.unitsSold }   // Orden descendente por cantidad vendida
+            .sorted { $0.unitsSold > $1.unitsSold }
         
+
+        var dailyMap: [Date: (units: Int, revenue: Double)] = [:]
+        let calendar = Calendar.current
+        
+        for order in orders {
+            let day = calendar.startOfDay(for: order.createdAt)
+            
+            let totalUnits = order.items.reduce(0) { $0 + $1.quantity }
+            let totalRevenue = order.total
+            
+            if var entry = dailyMap[day] {
+                entry.units += totalUnits
+                entry.revenue += totalRevenue
+                dailyMap[day] = entry
+            } else {
+                dailyMap[day] = (
+                    units: totalUnits,
+                    revenue: totalRevenue
+                )
+            }
+        }
+        
+        let dailySales: [DailySales] = dailyMap
+            .map { date, value in
+                DailySales(
+                    date: date,
+                    units: value.units,
+                    revenue: value.revenue
+                )
+            }
+            .sorted { $0.date < $1.date }
+        
+
         return SalesReport(
             period: period,
             totalRevenue: totalRevenue,
             totalOrders: totalOrders,
             totalUnitsSold: totalUnitsSold,
-            topProducts: topProducts
+            topProducts: topProducts,
+            dailySales: dailySales
         )
     }
 }

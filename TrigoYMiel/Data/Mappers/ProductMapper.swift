@@ -9,35 +9,27 @@ import FirebaseFirestore
 
 struct ProductMapper {
 
-    // Firestore → Domain
-
+    // MARK: Firestore → Domain
     static func toDomain(from data: [String: Any], id: String) throws -> Product {
-        guard
-            let name        = data["name"]        as? String,
-            let description = data["description"] as? String,
-            let ingredients = data["ingredients"] as? [String],
-            let unitPrice   = data["unitPrice"]   as? Double,
-            let isAvailable = data["isAvailable"] as? Bool,
-            let categoryId  = data["categoryId"]  as? String,
-            let imageURL    = data["imageURL"]    as? String,
-            let isPopular   = data["isPopular"]   as? Bool
-        else {
-            throw AppError.decodingError
-        }
 
        
-        guard let stockValue = data["stock"] else {
+        guard let name = data["name"] as? String else {
             throw AppError.decodingError
         }
 
+        let description = data["description"] as? String ?? ""
+        let ingredients = data["ingredients"] as? [String] ?? []
+        let unitPrice   = data["unitPrice"]   as? Double  ?? 0.0
+        let isAvailable = data["isAvailable"] as? Bool    ?? true
+        let categoryId  = data["categoryId"]  as? String  ?? ""
+        let imageURL    = data["imageURL"]    as? String  ?? ""
+        let isPopular   = data["isPopular"]   as? Bool    ?? false
+
+      
         let stock: Int
-        if let intVal = stockValue as? Int {
-            stock = intVal
-        } else if let int64Val = stockValue as? Int64 {
-            stock = Int(int64Val)
-        } else {
-            throw AppError.decodingError
-        }
+        if let intVal   = data["stock"] as? Int   { stock = intVal }
+        else if let int64Val = data["stock"] as? Int64 { stock = Int(int64Val) }
+        else { stock = 0 }
 
         return Product(
             id:          id,
@@ -53,8 +45,7 @@ struct ProductMapper {
         )
     }
 
-    // Domain → Firestore
-
+    // MARK: Domain → Firestore
     static func toFirestore(_ product: Product) -> [String: Any] {
         [
             "name":        product.name,
@@ -69,21 +60,21 @@ struct ProductMapper {
         ]
     }
 
-    // CDProductCache → Domain
-
+    // MARK: CDProductCache → Domain
     static func toDomain(from cache: CDProductCache) throws -> Product {
         guard
             let id          = cache.productId,
-            let name        = cache.name,
-            let description = cache.productDescription,
-            let categoryId  = cache.categoryId,
-            let imageURL    = cache.imageURL,
-            let ingredients = cache.ingredients
+            let name        = cache.name
         else {
             throw AppError.coreDataError("Caché de producto inválida.")
         }
 
-        let ingredientsArray = ingredients
+        let description      = cache.productDescription ?? ""
+        let categoryId       = cache.categoryId         ?? ""
+        let imageURL         = cache.imageURL           ?? ""
+        let ingredientsCSV   = cache.ingredients        ?? ""
+
+        let ingredientsArray = ingredientsCSV
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
@@ -102,8 +93,7 @@ struct ProductMapper {
         )
     }
 
-    // Domain → CDProductCache
-
+    // MARK: Domain → CDProductCache
     static func toCache(_ product: Product, entity: CDProductCache) {
         entity.productId          = product.id
         entity.name               = product.name

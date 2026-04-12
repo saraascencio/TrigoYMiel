@@ -9,13 +9,11 @@ import FirebaseCore
 
 @main
 struct TrigoYMielApp: App {
-
     @StateObject private var diContainer   = AppDIContainer()
     @StateObject private var appCoordinator: AppCoordinator
 
     init() {
         FirebaseApp.configure()
-        // AppCoordinator necesita el container, lo creamos antes del @StateObject
         let container = AppDIContainer()
         _appCoordinator = StateObject(
             wrappedValue: AppCoordinator(diContainer: container)
@@ -33,7 +31,6 @@ struct TrigoYMielApp: App {
 }
 
 // MARK: - AppRootView
-// Punto de decisión: ¿hay sesión activa? → bifurca a Auth o a la app.
 
 struct AppRootView: View {
 
@@ -45,11 +42,16 @@ struct AppRootView: View {
             if appCoordinator.isLoading {
                 SplashView()
             } else if let user = appCoordinator.currentUser {
-                // Bifurca según rol
                 if user.isAdmin {
-                    Text("Admin Tab — pendiente") // AdminTabCoordinator irá aquí
+                    AdminTabCoordinator(
+                        diContainer: diContainer,
+                        currentUser: user,
+                        onLogout: {                          
+                            Task { await appCoordinator.handleLogout() }
+                        }
+                    )
                 } else {
-                    Text("Client Tab — pendiente") // ClientTabCoordinator irá aquí
+                    Text("Client Tab — pendiente")
                 }
             } else {
                 AuthCoordinator(
@@ -62,4 +64,3 @@ struct AppRootView: View {
         }
     }
 }
-

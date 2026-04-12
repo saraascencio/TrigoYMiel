@@ -11,20 +11,21 @@ struct UserMapper {
 
     // MARK: Firestore → Domain
     static func toDomain(from data: [String: Any], id: String) throws -> User {
+
+        // Solo email y registeredAt son críticos
         guard
-            let name     = data["name"]         as? String,
-            let email    = data["email"]         as? String,
-            let roleRaw  = data["role"]          as? String,
-            let role     = UserRole(rawValue: roleRaw),
-            let isActive = data["isActive"]      as? Bool,
-            let regTS    = data["registeredAt"]  as? Timestamp
+            let email = data["email"]        as? String,
+            let regTS = data["registeredAt"] as? Timestamp
         else {
             throw AppError.decodingError
         }
 
-        // Opcionales — admin no los necesita
-        let phone     = data["phone"]           as? String ?? ""
-        let wholesale = data["wholesaleActive"] as? Bool   ?? false
+        let name     = data["name"]  as? String ?? "Usuario"
+        let roleRaw  = data["role"]  as? String ?? UserRole.client.rawValue
+        let role     = UserRole(rawValue: roleRaw) ?? .client
+        let isActive = data["isActive"] as? Bool ?? true
+        let phone    = data["phone"]    as? String ?? ""
+        let wholesale = data["wholesaleActive"] as? Bool ?? false
         let tier: ClientTier = wholesale ? .wholesale : .retail
 
         return User(

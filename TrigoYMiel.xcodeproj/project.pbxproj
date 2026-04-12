@@ -38,18 +38,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		EE680D782F809CA000F1098C /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		EE6EC7822F7CC4A0007A97C5 = {
 			isa = PBXGroup;
 			children = (
 				EE6EC78D2F7CC4A0007A97C5 /* TrigoYMiel */,
-				EE680D782F809CA000F1098C /* Frameworks */,
 				EE6EC78C2F7CC4A0007A97C5 /* Products */,
 			);
 			sourceTree = "<group>";
