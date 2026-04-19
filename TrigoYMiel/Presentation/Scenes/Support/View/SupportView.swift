@@ -81,8 +81,8 @@ struct SupportView: View {
     private var headerCard: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "info.circle")
-                .font(.system(size: 18))
-                .foregroundColor(.white)
+                           .font(.system(size: 18))
+                           .foregroundColor(.white)
             VStack(alignment: .leading, spacing: 4) {
                 Text("¿Tienes alguna consulta o necesitas ayuda?")
                     .font(.system(size: 15, weight: .semibold))

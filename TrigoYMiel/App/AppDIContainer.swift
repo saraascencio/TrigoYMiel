@@ -15,4 +15,13 @@ final class AppDIContainer: ObservableObject {
     let admininventoryDIContainer    = AdminInventoryDIContainer()
     let adminreportsDIContainer = AdminReportsDIContainer()
     let adminincidencesDIContainer   = AdminIncidencesDIContainer()
+    let catalogDIContainer  = CatalogDIContainer()
+    let cartDIContainer = CartDIContainer()
+    lazy var orderDIContainer: OrderDIContainer = {
+        return OrderDIContainer(
+            cartRepository: cartDIContainer.makeCartRepository()
+        )
+    }()
+    let wholesaleDIContainer     = WholesaleDIContainer()
+    let incidencesDIContainer = IncidencesDIContainer()
 }

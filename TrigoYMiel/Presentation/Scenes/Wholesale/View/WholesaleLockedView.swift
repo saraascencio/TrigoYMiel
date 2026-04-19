@@ -74,7 +74,7 @@ struct WholesaleLockedView: View {
         }
         .sheet(isPresented: $viewModel.showShareSheet) {
             if let code = viewModel.referralCode?.code {
-                ShareSheet(items: [
+                TextShareSheet(items: [
                     "¡Únete a Trigo y Miel con mi código de invitación: \(code) y juntos desbloqueamos acceso a mayoreo."
                 ])
             }
@@ -103,7 +103,7 @@ struct WholesaleLockedView: View {
 }
 
 // MARK: - ShareSheet
-struct ShareSheet: UIViewControllerRepresentable {
+struct TextShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: items, applicationActivities: nil)

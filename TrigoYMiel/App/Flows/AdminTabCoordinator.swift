@@ -7,64 +7,69 @@
 import SwiftUI
 
 struct AdminTabCoordinator: View {
-    
+   
     let diContainer: AppDIContainer
     let currentUser: User
-    let onLogout:    () -> Void
-    
-   
+    let onLogout: () -> Void
+  
     @State private var isShowingIncidences = false
-    
+   
     var body: some View {
-       
         NavigationStack {
-            TabView {
-                AdminOrdersView(
-                    viewModel: diContainer.adminOrdersDIContainer.makeAdminOrdersViewModel(),
-                    onLogout:  onLogout,
-                    onSupport: { isShowingIncidences = true }
-                )
-                .tabItem {
-                    Label("Pedidos", systemImage: "list.bullet.rectangle")
-                }
+            ZStack {
+                Color("ColorBackground")
+                    .ignoresSafeArea()
                 
-                AdminCatalogView(
-                    viewModel:   diContainer.adminCatalogDIContainer.makeAdminCatalogViewModel(),
-                    diContainer: diContainer.adminCatalogDIContainer,
-                    onLogout:    onLogout,
-                    onSupport:   { isShowingIncidences = true }
-                )
-                .tabItem {
-                    Label("Catálogo", systemImage: "square.grid.2x2")
+                TabView {
+                    AdminOrdersView(
+                        viewModel: diContainer.adminOrdersDIContainer.makeAdminOrdersViewModel(),
+                        onLogout: onLogout,
+                        onSupport: { isShowingIncidences = true }
+                    )
+                    .tabItem {
+                        Label("Pedidos", systemImage: "list.bullet.rectangle")
+                    }
+                   
+                    AdminCatalogView(
+                        viewModel: diContainer.adminCatalogDIContainer.makeAdminCatalogViewModel(),
+                        diContainer: diContainer.adminCatalogDIContainer,
+                        onLogout: onLogout,
+                        onSupport: { isShowingIncidences = true }
+                    )
+                    .tabItem {
+                        Label("Catálogo", systemImage: "square.grid.2x2")
+                    }
+                   
+                    InventoryView(
+                        viewModel: diContainer.admininventoryDIContainer.makeInventoryViewModel(),
+                        adminId: currentUser.id,
+                        onLogout: onLogout,
+                        onSupport: { isShowingIncidences = true }
+                    )
+                    .tabItem {
+                        Label("Inventario", systemImage: "archivebox")
+                    }
+                   
+                    ReportsView(
+                        viewModel: diContainer.adminreportsDIContainer.makeReportsViewModel(),
+                        onLogout: onLogout,
+                        onSupport: { isShowingIncidences = true }
+                    )
+                    .tabItem {
+                        Label("Reportes", systemImage: "chart.bar")
+                    }
                 }
-                
-                InventoryView(
-                    viewModel: diContainer.admininventoryDIContainer.makeInventoryViewModel(),
-                    adminId:   currentUser.id,
-                    onLogout:  onLogout,
-                    onSupport: { isShowingIncidences = true }
-                )
-                .tabItem {
-                    Label("Inventario", systemImage: "archivebox")
-                }
-                
-                ReportsView(
-                    viewModel: diContainer.adminreportsDIContainer.makeReportsViewModel(),
-                    onLogout:  onLogout,
-                    onSupport: { isShowingIncidences = true }
-                )
-                .tabItem {
-                    Label("Reportes", systemImage: "chart.bar")
-                }
+                .tint(Color("ColorSecondary"))
             }
-            .tint(Color("ColorSecondary"))
+            
+            // Navegación y fullScreenCover fuera del ZStack (importante)
             .fullScreenCover(isPresented: $isShowingIncidences) {
                 NavigationStack {
                     IncidencesView(
                         viewModel: diContainer.adminincidencesDIContainer.makeIncidencesViewModel(),
-                        adminId:   currentUser.id,
-                        onLogout:  onLogout,
-                        onSupport: { isShowingIncidences = false } // Para cerrar el flujo
+                        adminId: currentUser.id,
+                        onLogout: onLogout,
+                        onSupport: { isShowingIncidences = false }
                     )
                 }
             }
