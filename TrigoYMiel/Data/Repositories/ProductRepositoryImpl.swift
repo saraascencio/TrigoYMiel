@@ -10,12 +10,12 @@ import Foundation
 // Estrategia network-first con fallback a caché CoreData cuando no hay red.
 
 final class ProductRepositoryImpl: ProductRepository {
-
+    
     private let remoteDataSource = ProductFirestoreDataSource()
     private let localDataSource  = ProductCoreDataSource()
-
+    
     // MARK: - Read
-
+    
     func getAllProducts() async throws -> [Product] {
         do {
             let products = try await remoteDataSource.getAllProducts()
@@ -30,7 +30,7 @@ final class ProductRepositoryImpl: ProductRepository {
             throw error
         }
     }
-
+    
     func getProducts(byCategory categoryId: String) async throws -> [Product] {
         do {
             return try await remoteDataSource.getProducts(byCategory: categoryId)
@@ -39,7 +39,7 @@ final class ProductRepositoryImpl: ProductRepository {
                 .filter { $0.categoryId == categoryId && $0.isAvailable } ?? []
         }
     }
-
+    
     func getPopularProducts() async throws -> [Product] {
         do {
             return try await remoteDataSource.getPopularProducts()
@@ -48,7 +48,7 @@ final class ProductRepositoryImpl: ProductRepository {
                 .filter { $0.isPopular && $0.isAvailable } ?? []
         }
     }
-
+    
     func searchProducts(query: String) async throws -> [Product] {
         do {
             return try await remoteDataSource.searchProducts(query: query)
@@ -57,7 +57,7 @@ final class ProductRepositoryImpl: ProductRepository {
                 .filter { $0.name.localizedCaseInsensitiveContains(query) } ?? []
         }
     }
-
+    
     func getProduct(id: String) async throws -> Product {
         do {
             return try await remoteDataSource.getProduct(id: id)
@@ -66,26 +66,35 @@ final class ProductRepositoryImpl: ProductRepository {
             throw AppError.productNotAvailable
         }
     }
-
+    
     // MARK: - Write (Admin)
-
+    
     func createProduct(_ product: Product) async throws -> Product {
         let created = try await remoteDataSource.createProduct(product)
         try? localDataSource.upsertProduct(created)
         return created
     }
-
+    
     func updateProduct(_ product: Product) async throws -> Product {
         let updated = try await remoteDataSource.updateProduct(product)
         try? localDataSource.upsertProduct(updated)
         return updated
     }
-
+    
     func deleteProduct(id: String) async throws {
         try await remoteDataSource.deleteProduct(id: id)
     }
-
+    
     func getAllCategories() async throws -> [ProductCategory] {
         try await remoteDataSource.getAllCategories()
+    }
+    
+    func getActivePromotions() async throws -> [Promotion] {
+        do {
+            return try await remoteDataSource.getActivePromotions()
+        } catch {
+            // fallback simple (puedes mejorar luego)
+            return []
+        }
     }
 }

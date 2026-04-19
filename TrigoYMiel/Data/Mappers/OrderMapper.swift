@@ -9,11 +9,10 @@ import FirebaseFirestore
 
 // MARK: - OrderMapper
 struct OrderMapper {
-
+    
     // MARK: Firestore → Domain
     static func toDomain(from data: [String: Any], id: String) throws -> Order {
-
-        // Campos críticos
+        
         guard
             let userId    = data["userId"]    as? String,
             let createdTS = data["createdAt"] as? Timestamp,
@@ -22,20 +21,21 @@ struct OrderMapper {
         else {
             throw AppError.decodingError
         }
-
-        // Enums con fallback
+        
+        // 🔥 EXTRAEMOS EL DESCUENTO (con fallback a 0.0)
+        let discountAmount = data["discountAmount"] as? Double ?? 0.0
+        
         let statusRaw  = data["status"]    as? String ?? OrderStatus.pending.rawValue
         let status     = OrderStatus(rawValue: statusRaw)  ?? .pending
-
+        
         let typeRaw    = data["orderType"] as? String ?? OrderType.retail.rawValue
         let orderType  = OrderType(rawValue: typeRaw)      ?? .retail
-
-        // Campos opcionales con fallback
-        let notes                = data["additionalNotes"]     as? String       ?? ""
-        let requiresAdvanceNotice = data["requiresAdvanceNotice"] as? Bool      ?? false
-        let itemsData            = data["items"]               as? [[String: Any]] ?? []
-        let items                = itemsData.compactMap { try? orderItemToDomain(from: $0) }
-
+        
+        let notes                 = data["additionalNotes"]       as? String       ?? ""
+        let requiresAdvanceNotice = data["requiresAdvanceNotice"] as? Bool       ?? false
+        let itemsData             = data["items"]                 as? [[String: Any]] ?? []
+        let items                 = itemsData.compactMap { try? orderItemToDomain(from: $0) }
+        
         return Order(
             id:                    id,
             userId:                userId,
@@ -44,29 +44,30 @@ struct OrderMapper {
             status:                status,
             orderType:             orderType,
             total:                 total,
+            discountAmount:        discountAmount, // 🔥 Ahora existe
             additionalNotes:       notes,
             items:                 items,
             requiresAdvanceNotice: requiresAdvanceNotice
         )
     }
-
+    
     static func orderItemToDomain(from data: [String: Any]) throws -> OrderItem {
-
+        
         // Campos críticos del item
         guard
             let productId = data["productId"] as? String
         else {
             throw AppError.decodingError
         }
-
+        
         let nameSnap  = data["nameSnap"]      as? String ?? ""
         let priceSnap = data["unitPriceSnap"] as? Double ?? 0.0
         let imageSnap = data["imageURLSnap"]  as? String ?? ""
         let quantity  = data["quantity"]      as? Int    ?? 0
         let subtotal  = data["subtotal"]      as? Double ?? 0.0
-
+        
         return OrderItem(
-            id:            UUID().uuidString,
+            //id:            UUID().uuidString,
             productId:     productId,
             nameSnap:      nameSnap,
             unitPriceSnap: priceSnap,
@@ -75,7 +76,8 @@ struct OrderMapper {
             subtotal:      subtotal
         )
     }
-
+    
+    // MARK: Domain → Firestore
     // MARK: Domain → Firestore
     static func toFirestore(_ order: Order) -> [String: Any] {
         [
@@ -85,12 +87,13 @@ struct OrderMapper {
             "status":                order.status.rawValue,
             "orderType":             order.orderType.rawValue,
             "total":                 order.total,
+            "discountAmount":        order.discountAmount, // 🔥 AGREGADO: Esto es vital
             "additionalNotes":       order.additionalNotes,
             "items":                 order.items.map { orderItemToFirestore($0) },
             "requiresAdvanceNotice": order.requiresAdvanceNotice
         ]
     }
-
+    
     static func orderItemToFirestore(_ item: OrderItem) -> [String: Any] {
         [
             "productId":     item.productId,

@@ -19,7 +19,6 @@ import Foundation
 //  4. Vacía el carrito en CoreData SOLO si Firestore confirmó sin error.
 //
 // Usado por: CartViewModel (botón "Confirmar pedido")
-
 final class PlaceOrderUseCase {
 
     private let orderRepository: OrderRepository
@@ -41,17 +40,18 @@ final class PlaceOrderUseCase {
         cart: [CartItem],
         pickupDate: Date,
         additionalNotes: String,
-        tier: ClientTier
+        tier: ClientTier,
+        total: Double,
+        discount: Double     
     ) async throws -> Order {
 
         guard !cart.isEmpty else {
             throw AppError.unknown("El carrito está vacío.")
         }
 
-        // Construir OrderItems con _snap
+        // Construir OrderItems con los datos (snap)
         let orderItems: [OrderItem] = cart.map { cartItem in
             OrderItem(
-                id: UUID().uuidString,
                 productId: cartItem.product.id,
                 nameSnap: cartItem.product.name,
                 unitPriceSnap: cartItem.product.unitPrice,
@@ -61,10 +61,10 @@ final class PlaceOrderUseCase {
             )
         }
 
-        let totalUnits     = orderItems.reduce(0) { $0 + $1.quantity }
-        let totalAmount    = orderItems.reduce(0) { $0 + $1.subtotal }
-        let requiresNotice = totalUnits > advanceNoticeThreshold
+        let totalUnits      = orderItems.reduce(0) { $0 + $1.quantity }
+        let requiresNotice  = totalUnits > advanceNoticeThreshold
 
+        // Creamos la orden usando los valores calculados que vienen del ViewModel
         let order = Order(
             id: UUID().uuidString,
             userId: userId,
@@ -72,16 +72,15 @@ final class PlaceOrderUseCase {
             pickupDate: pickupDate,
             status: .pending,
             orderType: tier == .wholesale ? .wholesale : .retail,
-            total: totalAmount,
+            total: total,
+            discountAmount: discount,
             additionalNotes: additionalNotes,
             items: orderItems,
             requiresAdvanceNotice: requiresNotice
         )
 
-        // 1. Crear en Firestore
-        let createdOrder = try await orderRepository.placeOrder(order)
 
-        // 2. Vaciar el carrito local solo si Firestore confirmó
+        let createdOrder = try await orderRepository.placeOrder(order)
         try await cartRepository.clearCart(userId: userId)
 
         return createdOrder

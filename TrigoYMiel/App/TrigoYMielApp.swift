@@ -51,7 +51,13 @@ struct AppRootView: View {
                         }
                     )
                 } else {
-                    Text("Client Tab — pendiente")
+                    ClientTabCoordinator(        
+                        diContainer: diContainer,
+                        currentUser: user,
+                        onLogout: {
+                            Task { await appCoordinator.handleLogout() }
+                        }
+                    )
                 }
             } else {
                 AuthCoordinator(

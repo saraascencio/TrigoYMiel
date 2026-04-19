@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
 // MARK: - Promotion
 // Representa una promoción del negocio.
@@ -18,13 +19,13 @@ import Foundation
 //   solo_mayoristas, fecha_inicio, fecha_fin,
 //   activa, productos_aplicables (array<reference>)
 
-struct Promotion: Identifiable, Equatable {
-    let id: String                          // promocion_id
+struct Promotion: Identifiable, Equatable, Codable {
+    @DocumentID var id: String? // promocion_id
     let description: String                 // descripcion
     let discountPercentage: Double          // descuento_porcentaje (ej: 10.0 = 10%)
     let wholesaleOnly: Bool                 // solo_mayoristas
-    let startDate: Date                     // fecha_inicio
-    let endDate: Date                       // fecha_fin
+    let startDate: Date                    // fecha_inicio
+    let endDate: Date                      // fecha_fin
     let isActive: Bool                      // activa
     let applicableProductIds: [String]      // productos_aplicables → array<reference>
 

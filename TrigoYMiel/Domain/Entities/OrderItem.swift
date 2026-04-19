@@ -21,7 +21,7 @@ import Foundation
 //   imagen_url_snap, cantidad, subtotal
 
 struct OrderItem: Identifiable, Equatable {
-    let id: String              // UUID local para Identifiable en SwiftUI
+    var id: String { productId } //UUID local para Identifiable en SwiftUI
     let productId: String       // producto_id → referencia al producto original
     let nameSnap: String        // nombre_snap → nombre al momento del pedido
     let unitPriceSnap: Double   // precio_unitario_snap → precio al momento del pedido
