@@ -32,7 +32,9 @@ enum AppError: Error, LocalizedError {
     case orderNotFound
     case orderAlreadyDelivered
     case invalidPickupTime
-
+    case orderInProgress         // <--- Añadir este
+    case dailyLimitReached       // <--- Añadir este
+    
     // MARK: Wholesale
     case invalidReferralCode
     case referralCodeAlreadyUsed
@@ -77,6 +79,10 @@ enum AppError: Error, LocalizedError {
             return "Este pedido ya fue entregado."
         case .invalidPickupTime:
             return "La hora de retiro seleccionada no es válida."
+        case .orderInProgress: // <--- Nuevo mensaje
+            return "Ya tienes un pedido en curso. Debes esperar a que se complete para realizar otro."
+        case .dailyLimitReached: // <--- Nuevo mensaje
+            return "Has alcanzado el límite de 3 pedidos por día."
         case .invalidReferralCode:
             return "El código de invitación no es válido."
         case .referralCodeAlreadyUsed:

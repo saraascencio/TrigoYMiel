@@ -12,20 +12,21 @@ import Foundation
 // Si el producto ya está en el carrito, el repositorio incrementa su cantidad.
 //
 // Usado por: ProductDetailViewModel (botón "Añadir al carrito")
-
 final class AddToCartUseCase {
-
     private let cartRepository: CartRepository
+    private let orderRepository: OrderRepository
     private let validateCartLimits: ValidateCartLimitsUseCase
 
     init(
         cartRepository: CartRepository,
+        orderRepository: OrderRepository,
         validateCartLimits: ValidateCartLimitsUseCase
     ) {
-        self.cartRepository     = cartRepository
+        self.cartRepository = cartRepository
+        self.orderRepository = orderRepository
         self.validateCartLimits = validateCartLimits
     }
-
+    
     func execute(
         product: Product,
         quantity: Int,
@@ -34,12 +35,13 @@ final class AddToCartUseCase {
         tier: ClientTier
     ) async throws {
 
-        // Primero valida — si lanza, no se toca el carrito
-        try validateCartLimits.execute(
+ 
+        try await validateCartLimits.execute(
             currentCart: currentCart,
             productToAdd: product,
             quantityToAdd: quantity,
-            tier: tier
+            tier: tier,
+            userId: userId
         )
 
         guard product.isInStock else {

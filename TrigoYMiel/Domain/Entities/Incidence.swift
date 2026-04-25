@@ -32,9 +32,9 @@ struct Incidence: Identifiable, Equatable {
     var status: IncidenceStatus     // estado (mutable: el admin lo actualiza)
     var resolution: String?         // resolucion (nota del admin al resolver)
     var resolvedAt: Date?           // fecha_resolucion
-
+    
     // MARK: - Computed helpers
-
+    
     var formattedCreatedAt: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -42,12 +42,11 @@ struct Incidence: Identifiable, Equatable {
         formatter.locale = Locale(identifier: "es_SV")
         return formatter.string(from: createdAt)
     }
+    
+   
 }
 
 // MARK: - IncidenceStatus
-// Estado de la incidencia.
-// El admin la marca como resuelta desde IncidenceDetailView.
-
 enum IncidenceStatus: String, Codable {
     case open     = "abierta"
     case resolved = "resuelta"

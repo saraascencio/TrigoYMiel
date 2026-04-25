@@ -18,9 +18,7 @@ struct SalesReport: Equatable {
     let totalOrders: Int                // número de pedidos entregados
     let totalUnitsSold: Int             // total de unidades vendidas
     let topProducts: [ProductSalesSummary] // productos más vendidos
-
-    // MARK: - Computed helpers
-
+    let dailySales: [DailySales]    // MARK: - Computed helpers
     var formattedRevenue: String {
         String(format: "$%.2f", totalRevenue)
     }
@@ -85,4 +83,10 @@ enum ReportPeriod: String, CaseIterable {
             return DateInterval(start: now, end: now)
         }
     }
+}
+
+struct DailySales: Equatable {
+    let date: Date
+    let units: Int
+    let revenue: Double
 }

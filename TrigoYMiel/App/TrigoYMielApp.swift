@@ -4,18 +4,69 @@
 //
 //  Created by Sara Ascencio on 31/3/26.
 //
-
 import SwiftUI
-import CoreData
+import FirebaseCore
 
 @main
 struct TrigoYMielApp: App {
-    //let persistenceController = PersistenceController.shared
+    @StateObject private var diContainer   = AppDIContainer()
+    @StateObject private var appCoordinator: AppCoordinator
+
+    init() {
+        FirebaseApp.configure()
+        let container = AppDIContainer()
+        _appCoordinator = StateObject(
+            wrappedValue: AppCoordinator(diContainer: container)
+        )
+    }
 
     var body: some Scene {
         WindowGroup {
-            //ContentView()
-                //.environment(\.managedObjectContext, //persistenceController.container.viewContext)
+            AppRootView()
+                .environmentObject(diContainer)
+                .environmentObject(appCoordinator)
+                .task { await appCoordinator.checkExistingSession() }
+        }
+    }
+}
+
+// MARK: - AppRootView
+
+struct AppRootView: View {
+
+    @EnvironmentObject private var appCoordinator: AppCoordinator
+    @EnvironmentObject private var diContainer:    AppDIContainer
+
+    var body: some View {
+        Group {
+            if appCoordinator.isLoading {
+                SplashView()
+            } else if let user = appCoordinator.currentUser {
+                if user.isAdmin {
+                    AdminTabCoordinator(
+                        diContainer: diContainer,
+                        currentUser: user,
+                        onLogout: {                          
+                            Task { await appCoordinator.handleLogout() }
+                        }
+                    )
+                } else {
+                    ClientTabCoordinator(        
+                        diContainer: diContainer,
+                        currentUser: user,
+                        onLogout: {
+                            Task { await appCoordinator.handleLogout() }
+                        }
+                    )
+                }
+            } else {
+                AuthCoordinator(
+                    diContainer: diContainer.authDIContainer,
+                    onAuthSuccess: { user in
+                        appCoordinator.onLoginSuccess(user)
+                    }
+                )
+            }
         }
     }
 }

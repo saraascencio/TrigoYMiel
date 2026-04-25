@@ -4,4 +4,24 @@
 //
 //  Created by Sara Ascencio on 31/3/26.
 //
+import Foundation
+import Combine
 
+
+final class AppDIContainer: ObservableObject {
+    let authDIContainer = AuthDIContainer()
+    let adminOrdersDIContainer = AdminOrdersDIContainer()
+    let adminCatalogDIContainer = AdminCatalogDIContainer()
+    let admininventoryDIContainer    = AdminInventoryDIContainer()
+    let adminreportsDIContainer = AdminReportsDIContainer()
+    let adminincidencesDIContainer   = AdminIncidencesDIContainer()
+    let catalogDIContainer  = CatalogDIContainer()
+    let cartDIContainer = CartDIContainer()
+    lazy var orderDIContainer: OrderDIContainer = {
+        return OrderDIContainer(
+            cartRepository: cartDIContainer.makeCartRepository()
+        )
+    }()
+    let wholesaleDIContainer     = WholesaleDIContainer()
+    let incidencesDIContainer = IncidencesDIContainer()
+}

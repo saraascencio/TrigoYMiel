@@ -14,16 +14,19 @@
 final class UpdateCartItemUseCase {
 
     private let cartRepository: CartRepository
-    private let validateCartLimits: ValidateCartLimitsUseCase
+        private let orderRepository: OrderRepository // 1. Propiedad declarada
+        private let validateCartLimits: ValidateCartLimitsUseCase
 
-    init(
-        cartRepository: CartRepository,
-        validateCartLimits: ValidateCartLimitsUseCase
-    ) {
-        self.cartRepository     = cartRepository
-        self.validateCartLimits = validateCartLimits
-    }
-
+        init(
+            cartRepository: CartRepository,
+            orderRepository: OrderRepository, // 2. Parámetro añadido al init
+            validateCartLimits: ValidateCartLimitsUseCase
+        ) {
+            self.cartRepository     = cartRepository
+            self.orderRepository    = orderRepository // 3. Asignación
+            self.validateCartLimits = validateCartLimits
+        }
+    
     func execute(
         item: CartItem,
         newQuantity: Int,
@@ -42,11 +45,12 @@ final class UpdateCartItemUseCase {
 
         // Validar con el carrito sin el ítem actual para no doble-contar
         let cartWithoutCurrent = currentCart.filter { $0.product.id != item.product.id }
-        try validateCartLimits.execute(
+        try await validateCartLimits.execute(
             currentCart: cartWithoutCurrent,
             productToAdd: item.product,
             quantityToAdd: newQuantity,
-            tier: tier
+            tier: tier,
+            userId: userId
         )
 
         let updatedItem = CartItem(
