@@ -14,7 +14,6 @@ import Combine
 // El cliente selecciona canal, tipo de incidencia, pedido relacionado,
 // escribe una descripción y opcionalmente adjunta una foto.
 // Llama a ReportIncidenceUseCase al enviar.
-
 @MainActor
 final class SupportViewModel: ObservableObject {
 
@@ -24,7 +23,9 @@ final class SupportViewModel: ObservableObject {
     @Published var selectedOrder: Order? = nil
     @Published var description: String = ""
     @Published var selectedImageData: Data? = nil
-
+    @Published var uploadedImageURL: String? = nil //agregado
+    @Published var isUploadingImage: Bool = false //agregado
+    
     // MARK: - Estado de UI
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -84,7 +85,13 @@ final class SupportViewModel: ObservableObject {
             errorMessage = "Selecciona un pedido relacionado."
             return
         }
-
+        
+        //agregado
+        if isUploadingImage {
+                    errorMessage = "Espera a que la imagen termine de subirse."
+                    return
+        }
+        
         isLoading = true
         errorMessage = nil
 
@@ -95,7 +102,7 @@ final class SupportViewModel: ObservableObject {
                 type: selectedType,
                 channel: selectedChannel,
                 description: description,
-                evidenceImageData: selectedImageData
+                evidenceURL: uploadedImageURL //agregado
             )
             didSubmitSuccessfully = true
             resetForm()
@@ -122,6 +129,25 @@ final class SupportViewModel: ObservableObject {
         return true
     }
 
+    // MARK: - Subir Imagen
+        func uploadImage(_ data: Data) async {
+            guard let uiImage = UIImage(data: data) else { return }
+            
+            isUploadingImage = true
+            errorMessage = nil
+            
+            do {
+                let url = try await CloudinaryService.shared.uploadImage(uiImage)
+                self.uploadedImageURL = url
+            } catch {
+                self.errorMessage = "No se pudo subir la imagen a la nube."
+                self.selectedImageData = nil
+            }
+            
+            isUploadingImage = false
+        }
+    
+    
     // MARK: - Reset
     private func resetForm() {
         description       = ""

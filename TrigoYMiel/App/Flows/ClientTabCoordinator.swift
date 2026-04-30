@@ -106,7 +106,14 @@ struct ClientTabCoordinator: View {
             // MARK: Soporte cliente
             .navigationDestination(isPresented: $isShowingSupport) {
                 SupportView(
-                    viewModel: diContainer.incidencesDIContainer.makeSupportViewModel(currentUser: currentUser)
+                    viewModel: diContainer.incidencesDIContainer.makeSupportViewModel(currentUser: currentUser),
+        
+                    onLogout: onLogout,
+                    onSupport: { isShowingSupport = true }
+                    /*onCartTap: {
+                        isShowingSupport = false
+                        isShowingCart = true
+                    }*/
                 )
             }
         }

@@ -11,7 +11,6 @@ import Foundation
 // Protocolo para operaciones sobre incidencias en Firestore.
 // El cliente crea incidencias desde SupportView.
 // El admin las gestiona desde IncidencesView e IncidenceDetailView.
-
 protocol IncidenceRepository {
 
     // MARK: Cliente
@@ -20,8 +19,7 @@ protocol IncidenceRepository {
     /// Si hay imagen, la sube a Firebase Storage y guarda la URL en evidencia_url.
     /// Lanza: .networkUnavailable
     func reportIncidence(
-        _ incidence: Incidence,
-        evidenceImageData: Data?
+        _ incidence: Incidence
     ) async throws -> Incidence
 
     /// Incidencias del cliente autenticado.

@@ -18,11 +18,14 @@ import PhotosUI
 // - Tarjetas de pedido y descripción con esquinas más suaves
 // - Todo centrado exactamente como en el prototipo
 // - NO se cambió ningún color de assets (ColorPrimary, ColorSecondary, etc.)
-
 struct SupportView: View {
     @StateObject var viewModel: SupportViewModel
+    var onLogout: () -> Void = {}
+    var onSupport: () -> Void = {}
+    //var onCartTap: () -> Void = {}
     @State private var showProfileMenu = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationStack {
@@ -50,7 +53,15 @@ struct SupportView: View {
             }
             .navigationTitle("Contacto y ayuda")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                      Text("Contacto y ayuda")
+                          .font(.system(size: 16, weight: .semibold))
+                          .foregroundColor(Color("ColorPrimary"))
+                  }
+                
+                toolbarContent }
             .task { await viewModel.loadOrders() }
             .alert("Incidencia enviada",
                    isPresented: $viewModel.didSubmitSuccessfully) {
@@ -70,7 +81,9 @@ struct SupportView: View {
             .onChange(of: selectedPhotoItem) { newItem in
                 Task {
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        viewModel.selectedImageData = data
+                                viewModel.selectedImageData = data
+                                // agregado
+                                await viewModel.uploadImage(data)
                     }
                 }
             }
@@ -269,6 +282,7 @@ struct SupportView: View {
     // MARK: - Adjuntar foto
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Botón para abrir la galería
             PhotosPicker(selection: $selectedPhotoItem,
                          matching: .images,
                          photoLibrary: .shared()) {
@@ -276,6 +290,7 @@ struct SupportView: View {
                     Image(systemName: "photo.badge.plus")
                         .font(.system(size: 16))
                         .foregroundColor(Color("ColorPrimary"))
+                    
                     Text(viewModel.selectedImageData == nil
                          ? "Adjuntar foto"
                          : "Foto adjunta ✓")
@@ -284,24 +299,43 @@ struct SupportView: View {
                 }
             }
             .buttonStyle(.plain)
-            if let data = viewModel.selectedImageData,
-               let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(alignment: .topTrailing) {
-                        Button {
-                            viewModel.selectedImageData = nil
-                            selectedPhotoItem = nil
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(Color("ColorPrimary"))
-                                .background(Color.white, in: Circle())
+            .disabled(viewModel.isUploadingImage) // Deshabilitar mientras sube
+
+            // Área de Previsualización
+            if let data = viewModel.selectedImageData, let uiImage = UIImage(data: data) {
+                ZStack(alignment: .topTrailing) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay {
+                            // Capa de carga para Cloudinary
+                            if viewModel.isUploadingImage {
+                                ZStack {
+                                    Color.black.opacity(0.4)
+                                    ProgressView()
+                                        .tint(.white)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
                         }
-                        .offset(x: 6, y: -6)
+                    
+                    // Botón para eliminar la foto
+                    Button {
+                        viewModel.selectedImageData = nil
+                        viewModel.uploadedImageURL = nil // Limpiar URL de Cloudinary
+                        selectedPhotoItem = nil          // Resetear picker
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.red) // Estilo más visible
                     }
+                    .offset(x: 8, y: -8)
+                    .disabled(viewModel.isUploadingImage)
+                }
+                .padding(.top, 5)
             }
         }
     }
@@ -326,38 +360,31 @@ struct SupportView: View {
             .background(Color("ColorSecondary"))
             .cornerRadius(12)
         }
-        .disabled(viewModel.isLoading)
+        .disabled(viewModel.isLoading || viewModel.isUploadingImage)
         .padding(.top, 8)
     }
     
     // MARK: - Toolbar
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+     
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color("ColorPrimary"))
+            }
+        }
+
         ToolbarItem(placement: .navigationBarTrailing) {
-            HStack(spacing: 16) {
-                Menu {
-                    Button {
-                        // Acción: cerrar sesión
-                    } label: {
-                        Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                    Button {
-                        // Acción: ya estás en soporte
-                    } label: {
-                        Label("Contacta a soporte", systemImage: "message")
-                    }
-                } label: {
-                    Image(systemName: "person.circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color("ColorPrimary"))
-                }
-                Button {
-                    // Navegar al carrito
-                } label: {
-                    Image(systemName: "cart")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color("ColorPrimary"))
-                }
+            HStack(spacing: 0) {
+                ProfileMenuButton(
+                    onLogout: { onLogout() },
+                    onSupport: { onSupport() }
+                    //onCartTap: { onCartTap() }
+                )
             }
         }
     }
@@ -366,7 +393,7 @@ struct SupportView: View {
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(.black)
+            .foregroundColor(Color("ColorPrimary"))
     }
 }
 

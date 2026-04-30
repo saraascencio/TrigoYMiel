@@ -8,13 +8,12 @@ import Foundation
 
 // MARK: - IncidenceRepositoryImpl
 // Delega toda la lógica al IncidenceFirestoreDataSource (Firestore + Storage).
-
 final class IncidenceRepositoryImpl: IncidenceRepository {
 
     private let remoteDataSource = IncidenceFirestoreDataSource()
 
-    func reportIncidence(_ incidence: Incidence, evidenceImageData: Data?) async throws -> Incidence {
-        try await remoteDataSource.reportIncidence(incidence, evidenceImageData: evidenceImageData)
+    func reportIncidence(_ incidence: Incidence) async throws -> Incidence {
+        try await remoteDataSource.reportIncidence(incidence)
     }
 
     func getMyIncidences(userId: String) async throws -> [Incidence] {

@@ -15,26 +15,26 @@ import Foundation
 // Usado por: SupportViewModel
 
 final class ReportIncidenceUseCase {
-
+    
     private let incidenceRepository: IncidenceRepository
-
+    
     init(incidenceRepository: IncidenceRepository) {
         self.incidenceRepository = incidenceRepository
     }
-
+    
     func execute(
         userId: String,
         orderId: String,
         type: IncidenceType,
         channel: ContactChannel,
         description: String,
-        evidenceImageData: Data?
+        evidenceURL: String?
     ) async throws -> Incidence {
-
+        
         guard !description.trimmingCharacters(in: .whitespaces).isEmpty else {
             throw AppError.unknown("La descripción no puede estar vacía.")
         }
-
+        
         let incidence = Incidence(
             id: UUID().uuidString,
             userId: userId,
@@ -43,16 +43,15 @@ final class ReportIncidenceUseCase {
             type: type,
             channel: channel,
             description: description,
-            evidenceURL: nil,       // el repositorio sube la imagen y llena este campo
+            evidenceURL: evidenceURL,       // el repositorio sube la imagen y llena este campo
             createdAt: Date(),
             status: .open,
             resolution: nil,
             resolvedAt: nil
         )
-
-        return try await incidenceRepository.reportIncidence(
-            incidence,
-            evidenceImageData: evidenceImageData
-        )
+        
+        return try await incidenceRepository.reportIncidence(incidence)
     }
+    
+    
 }

@@ -13,36 +13,14 @@ final class IncidenceFirestoreDataSource {
     private let client = FirestoreClient.shared
     
     // MARK: - Report
-    func reportIncidence(_ incidence: Incidence, evidenceImageData: Data?) async throws -> Incidence {
-        var evidenceURL: String? = nil 
-        
-
-        if let imageData = evidenceImageData {
-            evidenceURL = try await uploadEvidenceImage(imageData, incidenceId: incidence.id)
-        }
-        
-        // Creamos el objeto final (por si quieres modificar algo antes de guardar)
-        let finalIncidence = Incidence(
-            id: incidence.id,
-            userId: incidence.userId,
-            orderId: incidence.orderId,
-            adminId: incidence.adminId,
-            type: incidence.type,
-            channel: incidence.channel,
-            description: incidence.description,
-            evidenceURL: evidenceURL,
-            createdAt: incidence.createdAt,
-            status: incidence.status,
-            resolution: incidence.resolution,
-            resolvedAt: incidence.resolvedAt
-        )
+    func reportIncidence(_ incidence: Incidence) async throws -> Incidence {
         
         do {
             try await client.incidencesCollection
-                .document(finalIncidence.id)
-                .setData(IncidenceMapper.toFirestore(finalIncidence))
+                .document(incidence.id)
+                .setData(IncidenceMapper.toFirestore(incidence))
             
-            return finalIncidence
+            return incidence
         } catch {
             throw AppError.firestoreError(error.localizedDescription)
         }
@@ -56,9 +34,9 @@ final class IncidenceFirestoreDataSource {
         
         return try await fetchIncidences(query: query)
     }
-    
+
     func getAllIncidences() async throws -> [Incidence] {
-        try await fetchIncidences(query: client.incidencesCollection)
+           try await fetchIncidences(query: client.incidencesCollection)
     }
     
     func getIncidenceDetail(incidenceId: String) async throws -> Incidence {
@@ -112,19 +90,6 @@ final class IncidenceFirestoreDataSource {
             }
         } catch {
             throw AppError.firestoreError(error.localizedDescription)
-        }
-    }
-    
-    // MARK: - Evidence Upload (descomentado y listo para usar)
-    
-    private func uploadEvidenceImage(_ data: Data, incidenceId: String) async throws -> String {
-        let ref = client.storage.reference().child("incidences/\(incidenceId).jpg")
-        do {
-            _ = try await ref.putDataAsync(data, metadata: nil)
-            let url = try await ref.downloadURL()
-            return url.absoluteString
-        } catch {
-            throw AppError.unknown("Error uploading evidence: \(error.localizedDescription)")
         }
     }
     

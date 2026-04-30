@@ -233,6 +233,9 @@ struct ProductDetailView: View {
     private var bottomActionButton: some View {
         Button {
             viewModel.addToCart()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            dismiss()
+                        }
         } label: {
             VStack(spacing: 4) {
                 if viewModel.isAddingToCart {
