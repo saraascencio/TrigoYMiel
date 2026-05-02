@@ -21,6 +21,7 @@ struct ClientTabCoordinator: View {
     @State private var wholesalePromotions: [Promotion] = []
     @State private var isShowingOrderDetail = false
     @State private var selectedOrder: Order? = nil
+    @State private var isShowingProfile  = false
     
     var body: some View {
         NavigationStack {
@@ -32,6 +33,7 @@ struct ClientTabCoordinator: View {
                     onLogout:          onLogout,
                     onSupport:         { isShowingSupport = true },
                     onCartTap:         { isShowingCart    = true },
+                    onProfile: { isShowingProfile   = true },
                     onProductSelected: { product in
                         selectedProduct  = product
                         isShowingProduct = true
@@ -45,6 +47,7 @@ struct ClientTabCoordinator: View {
                     onLogout: onLogout,
                     onSupport: { isShowingSupport = true },
                     onCartTap: { isShowingCart = true },
+                    onProfile: { isShowingProfile = true },
                     onOrderSelected: { order in
                         selectedOrder = order
                         isShowingOrderDetail = true
@@ -57,7 +60,8 @@ struct ClientTabCoordinator: View {
                         .makeOrderHistoryViewModel(userId: currentUser.id),
                     onLogout:  onLogout,
                     onSupport: { isShowingSupport = true },
-                    onCartTap: { isShowingCart    = true }
+                    onCartTap: { isShowingCart    = true },
+                    onProfile: { isShowingProfile = true }
                 )
                 .tabItem { Label("Historial", systemImage: "archivebox") }
 
@@ -67,7 +71,8 @@ struct ClientTabCoordinator: View {
                         .makeWholesaleViewModel(currentUser: currentUser),
                     onLogout:        onLogout,
                     onSupport:       { isShowingSupport       = true },
-                    onWholesaleCart: { isShowingWholesaleCart = true }
+                    onWholesaleCart: { isShowingWholesaleCart = true },
+                    onProfile: { isShowingProfile = true }
                 )
                 .tabItem { Label("Mayoreo", systemImage: "plus") }
             }
@@ -80,7 +85,8 @@ struct ClientTabCoordinator: View {
                     viewModel: diContainer.cartDIContainer
                         .makeCartViewModel(currentUser: currentUser),
                     onLogout:  onLogout,
-                    onSupport: { isShowingSupport = true }
+                    onSupport: { isShowingSupport = true },
+                    onProfile: { isShowingProfile = true }
                 )
             }
 
@@ -110,11 +116,21 @@ struct ClientTabCoordinator: View {
         
                     onLogout: onLogout,
                     onSupport: { isShowingSupport = true }
-                    /*onCartTap: {
-                        isShowingSupport = false
-                        isShowingCart = true
-                    }*/
+                  
                 )
+            }
+            
+            // MARK: Perfil cliente
+            .navigationDestination(isPresented: $isShowingProfile) {
+                let viewModel = diContainer.profileDIContainer
+                                    .makeProfileViewModel()
+                
+                ProfileView(viewModel: viewModel)
+                    .onAppear {
+                        Task { @MainActor in
+                            viewModel.loadUserData()
+                        }
+                    }
             }
         }
         .onReceive(

@@ -12,7 +12,8 @@ struct AdminCatalogView: View {
     let diContainer: AdminCatalogDIContainer
     let onLogout:  () -> Void
     let onSupport: () -> Void
-    
+    let onProfile: () -> Void
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -42,7 +43,8 @@ struct AdminCatalogView: View {
                         ProfileMenuButton(
                             onLogout:     { onLogout() },
                             onSupport:    { onSupport() },
-                            supportLabel: "Accede a soporte"  // abre IncidencesView
+                            onProfile:    { onProfile() },
+                            supportLabel: "Accede a soporte"  
                         )
                         .padding(.leading, 8)
                     }

@@ -79,9 +79,12 @@ struct CartItemRowView: View {
                 // MARK: Selector cantidad con input manual
                 HStack(spacing: 0) {
                     Button {
-                        let newQty = max(1, item.quantity - 1)
-                        quantityInput = "\(newQty)"
-                        onQuantityChange(newQty)
+                        let minAllowed = (item.quantity >= 75) ? 75 : 1
+                        let newQty = max(minAllowed, item.quantity - 1)
+                        if newQty != item.quantity {
+                            quantityInput = "\(newQty)"
+                            onQuantityChange(newQty)
+                        }
                     } label: {
                         Image(systemName: "minus")
                             .font(.subheadline.bold())
@@ -110,9 +113,14 @@ struct CartItemRowView: View {
                         }
 
                     Button {
-                        let newQty = item.quantity + 1
-                        quantityInput = "\(newQty)"
-                        onQuantityChange(newQty)
+                        let maxAllowed = (item.quantity >= 75) ? 100 : 74
+                        let finalMax = min(maxAllowed, item.product.stock) // No superar stock
+                        let newQty = min(finalMax, item.quantity + 1)
+                        
+                        if newQty != item.quantity {
+                            quantityInput = "\(newQty)"
+                            onQuantityChange(newQty)
+                        }
                     } label: {
                         Image(systemName: "plus")
                             .font(.subheadline.bold())
@@ -135,12 +143,24 @@ struct CartItemRowView: View {
     }
 
     private func commitInput() {
+        // Si el campo está vacío o es 0, parsed será 1 por defecto
         let parsed = Int(quantityInput) ?? 1
-        let clamped = max(1, min(parsed, 1000))
+        
+        let isWholesale = item.quantity >= 75
+        let minAllowed = isWholesale ? 75 : 1
+        let maxAllowed = isWholesale ? 100 : 74
+        let finalMax = min(maxAllowed, item.product.stock)
+        
+        // Aquí el clamped asegura que el 0 se convierta en 1 automáticamente
+        let clamped = max(minAllowed, min(parsed, finalMax))
+        
         quantityInput = "\(clamped)"
-        onQuantityChange(clamped)
+        
+        if clamped != item.quantity {
+            onQuantityChange(clamped)
+        }
     }
-
+    
     private func discountedSubtotal(_ promo: Promotion) -> String {
         let discounted = item.subtotal * (1 - promo.discountPercentage / 100)
         return String(format: "$%.2f", discounted)

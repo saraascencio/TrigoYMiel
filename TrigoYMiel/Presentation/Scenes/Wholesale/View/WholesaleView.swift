@@ -12,7 +12,8 @@ struct WholesaleView: View {
     let onLogout:        () -> Void
     let onSupport:       () -> Void
     let onWholesaleCart: () -> Void
-
+    let onProfile: () -> Void
+    
     var body: some View {
         ZStack {
             Color("ColorBackground").ignoresSafeArea()
@@ -25,6 +26,7 @@ struct WholesaleView: View {
                     ProfileMenuButton(
                         onLogout:     { onLogout() },
                         onSupport:    { onSupport() },
+                        onProfile:    { onProfile() },
                         supportLabel: "Soporte"
                     )
                     

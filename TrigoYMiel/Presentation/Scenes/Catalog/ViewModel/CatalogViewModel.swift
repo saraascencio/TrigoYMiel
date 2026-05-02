@@ -50,7 +50,7 @@ final class CatalogViewModel: ObservableObject {
     // MARK: - Computed
     var productsByCategory: [(category: ProductCategory, products: [Product])] {
         categories.compactMap { category in
-       
+            
             if let selected = selectedCategory, selected.id != category.id {
                 return nil
             }
@@ -77,16 +77,16 @@ final class CatalogViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-        
+            
             async let productsTask = getProductsUseCase.execute()
             async let popularTask  = getPopularProductsUseCase.execute()
             async let catsTask     = ProductRepositoryImpl().getAllCategories()
             
-       
+            
             async let userTask     = authRepository.currentUser()
             async let promosTask   = ProductRepositoryImpl().getActivePromotions()
             
-      
+            
             let (products, popular, cats, user, promos) = try await (productsTask, popularTask, catsTask, userTask, promosTask)
             
             self.allProducts      = products.filter { $0.isAvailable }
@@ -127,20 +127,32 @@ final class CatalogViewModel: ObservableObject {
     }
     
     // MARK: - Promociones (La lógica corregida)
+    // MARK: - Promociones (Lógica Corregida)
     func isProductOnPromotion(product: Product) -> Bool {
-    
         return activePromotions.contains { promotion in
-            promotion.isActive &&
-            promotion.wholesaleOnly &&
-            promotion.applicableProductIds.contains(product.id) &&
-            promotion.startDate <= Date() && Date() <= promotion.endDate
+            let isDateValid = promotion.startDate <= Date() && Date() <= promotion.endDate
+            let isProductIncluded = promotion.applicableProductIds.contains(product.id)
+            
+            return promotion.isActive && isProductIncluded && isDateValid
         }
     }
     
     func shouldShowPromotion(for product: Product) -> Bool {
-       
-        let isActuallyOnPromotion = isProductOnPromotion(product: product)
-        let isWholesaleUser = currentUser?.tier == .wholesale
-        return isActuallyOnPromotion && isWholesaleUser
+        // 1. Buscamos si existe una promoción activa para este producto
+        guard let promotion = activePromotions.first(where: { promo in
+            promo.isActive &&
+            promo.applicableProductIds.contains(product.id) &&
+            promo.startDate <= Date() && Date() <= promo.endDate
+        }) else {
+            return false
+        }
+        
+        // 2. Si la promo NO es exclusiva de mayoristas, se le muestra a todos
+        if !promotion.wholesaleOnly {
+            return true
+        }
+        
+        // 3. Si la promo SI es exclusiva, solo se muestra si el usuario es mayorista
+        return currentUser?.tier == .wholesale
     }
 }

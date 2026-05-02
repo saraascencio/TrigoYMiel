@@ -14,7 +14,8 @@ struct AdminOrdersView: View {
     @State private var isShowingDetail = false
     let onLogout:  () -> Void
     let onSupport: () -> Void
-
+    let onProfile: () -> Void
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -31,6 +32,7 @@ struct AdminOrdersView: View {
                         ProfileMenuButton(
                             onLogout:     { onLogout() },
                             onSupport:    { onSupport() },
+                            onProfile:    { onProfile() },
                             supportLabel: "Accede a soporte"
                         )
                         .padding(.leading, 8)
