@@ -12,8 +12,8 @@ struct ActiveOrdersView: View {
     let onLogout:  () -> Void
     let onSupport: () -> Void
     let onCartTap: () -> Void
+    let onProfile: () -> Void
     
-  
     let onOrderSelected: (Order) -> Void
 
     var body: some View {
@@ -28,8 +28,9 @@ struct ActiveOrdersView: View {
                     ClientMenuButton(
                             onLogout: { onLogout() },
                             onSupport: { onSupport() },
-                            onCartTap: { onCartTap() }
-                        )
+                            onCartTap: { onCartTap() },
+                            onProfile:    { onProfile() }
+                    )
                     .padding(.leading, 8)
                 }
                 .padding(.horizontal, 20)

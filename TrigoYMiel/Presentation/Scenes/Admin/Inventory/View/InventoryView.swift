@@ -15,6 +15,7 @@ struct InventoryView: View {
     @State private var selectedEntry: InventoryEntry? = nil
     let onLogout:  () -> Void
     let onSupport: () -> Void
+    let onProfile: () -> Void
     
     var body: some View {
         NavigationStack {
@@ -32,7 +33,8 @@ struct InventoryView: View {
                         ProfileMenuButton(
                             onLogout:     { onLogout() },
                             onSupport:    { onSupport() },
-                            supportLabel: "Accede a soporte"  
+                            onProfile:    { onProfile() },
+                            supportLabel: "Accede a soporte"
                         )
                     }
                     .padding(.horizontal, 20)

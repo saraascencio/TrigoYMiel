@@ -13,6 +13,7 @@ struct CartView: View {
 
     let onLogout: () -> Void
     let onSupport: () -> Void
+    let onProfile: () -> Void
     
     var body: some View {
         ZStack {
@@ -38,6 +39,7 @@ struct CartView: View {
                     ProfileMenuButton(
                         onLogout: { onLogout() },
                         onSupport: { onSupport() },
+                        onProfile:    { onProfile() },
                         supportLabel: "Soporte"
                     )
                 }
@@ -117,14 +119,19 @@ struct CartView: View {
                             PickupTimeSelectorView(
                                 pickupDate: $viewModel.pickupDate,
                                 isWholesaleValid: viewModel.isWholesaleCustomer,
-                                totalUnits: viewModel.totalUnits, 
+                                totalUnits: viewModel.totalUnits,
                                 minDate: viewModel.minPickupDate
                             )
                             .padding(.horizontal, 20)
 
                             // MARK: BOTÓN
                             Button {
-                                Task { await viewModel.placeOrder() }
+                            
+                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                                to: nil, from: nil, for: nil)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    Task { await viewModel.placeOrder() }
+                                }
                             } label: {
                                 Group {
                                     if viewModel.isPlacing {
@@ -153,15 +160,20 @@ struct CartView: View {
         .task { await viewModel.loadCart() }
 
         // MARK: ERROR ALERT
-        .alert("Error", isPresented: Binding(
+        .alert("Aviso de compra", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) {}
+            Button("Entendido", role: .cancel) {}
         } message: {
-            Text(viewModel.errorMessage ?? "")
+            // Aplicamos la limpieza directamente aquí o en el ViewModel
+            Text((viewModel.errorMessage ?? "")
+                .replacingOccurrences(of: "Unknown error: ", with: "", options: .caseInsensitive)
+                .replacingOccurrences(of: "unknown", with: "", options: .caseInsensitive)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            )
         }
-
+        
         // MARK: SUCCESS ALERT
         .alert("¡Pedido confirmado!", isPresented: $viewModel.orderPlaced) {
             Button("Ver mis pedidos", role: .cancel) { dismiss() }
@@ -188,7 +200,7 @@ struct CartView: View {
 
             if viewModel.totalDiscount > 0 {
                 HStack {
-                    Text("Descuento mayoreo")
+                    Text("Descuento")
                         .font(.subheadline)
                         .foregroundColor(Color("ColorSecondary"))
 
@@ -222,3 +234,4 @@ struct CartView: View {
         .padding(.horizontal, 20)
     }
 }
+

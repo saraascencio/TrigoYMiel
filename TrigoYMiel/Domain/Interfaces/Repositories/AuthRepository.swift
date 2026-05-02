@@ -17,20 +17,22 @@
 // ningún UseCase ni ViewModel.
 
 protocol AuthRepository {
-
+    
     /// Autentica al usuario con email y contraseña.
     /// Devuelve el User completo cargado desde Firestore.
     /// Lanza: .invalidCredentials, .userNotFound, .networkUnavailable
     func login(email: String, password: String) async throws -> User
-
+    
     /// Crea una nueva cuenta y el documento de usuario en Firestore.
     /// Si referralCode no es nil, lo valida y activa el mayoreo del invitador.
     /// Lanza: .emailAlreadyInUse, .weakPassword, .invalidReferralCode
     func register(name: String, phone: String, email: String, password: String, referralCode: String?) async throws -> User
-
+    
     /// Cierra la sesión activa en Firebase Auth y limpia la sesión local de CoreData.
     func logout() async throws
-
+    
     /// Devuelve el usuario actualmente autenticado, o nil si no hay sesión.
     func currentUser() async throws -> User?
+    
+    func updateLocalSession(_ user: User)
 }

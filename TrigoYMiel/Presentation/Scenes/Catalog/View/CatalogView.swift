@@ -12,6 +12,7 @@ struct CatalogView: View {
     let onLogout: () -> Void
     let onSupport: () -> Void
     let onCartTap: () -> Void
+    let onProfile: () -> Void
     let onProductSelected: (Product) -> Void
     
    
@@ -22,7 +23,7 @@ struct CatalogView: View {
         var calendar = Calendar.current
         calendar.timeZone = TimeZone(identifier: "America/El_Salvador") ?? TimeZone(identifier: "CST")!
         let hour = calendar.component(.hour, from: Date())
-        return hour >= 10 && hour < 20
+        return hour >= 9 && hour < 20
     }
     
     var body: some View {
@@ -55,8 +56,9 @@ struct CatalogView: View {
                             ClientMenuButton(
                                     onLogout: { onLogout() },
                                     onSupport: { onSupport() },
-                                    onCartTap: { onCartTap() }
-                                )
+                                    onCartTap: { onCartTap() },
+                                    onProfile:    { onProfile() }
+                            )
                             
                             .padding(.leading, 8)
                         }
@@ -265,7 +267,7 @@ struct CatalogView: View {
                     ForEach(viewModel.searchResults) { product in
                         CatalogProductRow(
                             product: product,
-                            isOnPromotion: viewModel.isProductOnPromotion(product: product) // <--- Aquí está la clave
+                            isOnPromotion: viewModel.shouldShowPromotion(for: product)
                         ) {
                             selectProduct(product)
                         }

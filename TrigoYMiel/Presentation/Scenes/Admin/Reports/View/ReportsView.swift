@@ -13,6 +13,7 @@ struct ReportsView: View {
     @State private var showShare = false
     let onLogout:  () -> Void
     let onSupport: () -> Void
+    let onProfile: () -> Void
     
     var body: some View {
         NavigationStack {
@@ -98,7 +99,8 @@ struct ReportsView: View {
 
             ProfileMenuButton(       
                 onLogout:  { onLogout() },
-                onSupport: { onSupport() }
+                onSupport: { onSupport() },
+                onProfile:    { onProfile() }
             )
         }
     }

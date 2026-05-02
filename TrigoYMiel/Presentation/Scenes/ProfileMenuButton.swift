@@ -8,22 +8,32 @@ import SwiftUI
 
 struct ProfileMenuButton: View {
 
-    let onLogout:  () -> Void
-    let onSupport: () -> Void
-    let supportLabel: String  // ← personalizable por rol
+    let onLogout:    () -> Void
+    let onSupport:   () -> Void
+    let onProfile:   () -> Void          
+    let supportLabel: String
 
     init(
         onLogout:     @escaping () -> Void,
         onSupport:    @escaping () -> Void,
+        onProfile:    @escaping () -> Void = {},
         supportLabel: String = "Accede a soporte"
     ) {
         self.onLogout     = onLogout
         self.onSupport    = onSupport
+        self.onProfile    = onProfile
         self.supportLabel = supportLabel
     }
 
     var body: some View {
         Menu {
+            // Mi perfil — primera opción
+            Button {
+                onProfile()
+            } label: {
+                Label("Mi perfil", systemImage: "person.crop.circle")
+            }
+
             Button {
                 onSupport()
             } label: {
@@ -38,8 +48,8 @@ struct ProfileMenuButton: View {
         } label: {
             Image(systemName: "person.circle")
                 .resizable()
-                   .frame(width: 28, height: 28)
-                   .foregroundColor(Color("ColorPrimary"))
+                .frame(width: 28, height: 28)
+                .foregroundColor(Color("ColorPrimary"))
         }
     }
 }

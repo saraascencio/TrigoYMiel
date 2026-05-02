@@ -12,7 +12,8 @@ struct IncidencesView: View {
     let adminId:   String
     let onLogout:  () -> Void
     let onSupport: () -> Void
-
+    let onProfile: () -> Void
+    
     @State private var isShowingDetail    = false
     @State private var selectedIncidence: Incidence? = nil
 
@@ -42,6 +43,7 @@ struct IncidencesView: View {
                     ProfileMenuButton(
                         onLogout:     { onLogout() },
                         onSupport:    { onSupport() },
+                        onProfile:    { onProfile() },
                         supportLabel: "Volver a inicio"
                     )
                 }

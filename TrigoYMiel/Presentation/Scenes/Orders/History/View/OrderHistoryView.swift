@@ -12,7 +12,8 @@ struct OrderHistoryView: View {
     let onLogout:  () -> Void
     let onSupport: () -> Void
     let onCartTap: () -> Void
-
+    let onProfile: () -> Void
+    
     var body: some View {
         ZStack {
             Color("ColorBackground").ignoresSafeArea()
@@ -25,8 +26,9 @@ struct OrderHistoryView: View {
                     ClientMenuButton(
                             onLogout: { onLogout() },
                             onSupport: { onSupport() },
-                            onCartTap: { onCartTap() }
-                        )
+                            onCartTap: { onCartTap() },
+                            onProfile:    { onProfile() }
+                    )
                     .padding(.leading, 8)
                 }
                 .padding(.horizontal, 20)
