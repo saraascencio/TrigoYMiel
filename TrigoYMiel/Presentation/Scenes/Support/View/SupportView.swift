@@ -132,7 +132,7 @@ struct SupportView: View {
               isShowingMyIncidences = true
           } label: {
               HStack(spacing: 8) {
-                  Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                  Image(systemName: "arrow.counterclockwise")
                       .font(.system(size: 15))
                       .foregroundColor(Color("ColorPrimary"))
                   Text("Ver mis reportes anteriores")
