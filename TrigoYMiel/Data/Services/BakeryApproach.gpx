@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BakeryApproach.gpx
+  TrigoYMiel — Simulación de llegada al local
+
+  Uso en Xcode:
+  1. Abre el proyecto y ejecuta en el simulador.
+  2. En la barra de depuración: Debug > Simulate Location > Add GPX File to Project...
+     Selecciona este archivo.
+  3. Xcode reproducirá la ruta punto a punto. Cuando la ubicación simulada
+     entre en el radio de 200 m del local (13.6929, -89.2182) iOS disparará
+     didEnterRegion → GeofenceService enviará la notificación.
+
+  Nota: ajusta <lat> y <lon> del primer waypoint a una calle cercana al local real.
+  Los puntos están separados ~30 segundos para que el simulador los interpole.
+-->
+<gpx version="1.1"
+     creator="Xcode"
+     xmlns="http://www.topografix.com/GPX/1/1">
+
+  <metadata>
+    <name>Aproximación a Trigo y Miel</name>
+    <desc>Ruta de simulación: desde 400 m fuera hasta dentro del radio del local</desc>
+  </metadata>
+
+  <!-- Punto de partida: ~400 m al norte del local -->
+  <wpt lat="13.6965" lon="-89.2182">
+    <name>Inicio</name>
+    <desc>Punto de partida de la simulación</desc>
+  </wpt>
+
+  <!-- Avanzando hacia el sur -->
+  <wpt lat="13.6953" lon="-89.2182">
+    <name>Tramo 1</name>
+  </wpt>
+
+  <wpt lat="13.6942" lon="-89.2183">
+    <name>Tramo 2</name>
+  </wpt>
+
+  <!-- Entrando al radio de 200 m — se disparará didEnterRegion aquí -->
+  <wpt lat="13.6930" lon="-89.2183">
+    <name>Zona de notificación</name>
+    <desc>El cliente entra al radio del local. GeofenceService dispara la notificación.</desc>
+  </wpt>
+
+  <!-- Frente al local -->
+  <wpt lat="13.6929" lon="-89.2182">
+    <name>Local Trigo y Miel</name>
+    <desc>Destino final — frente a la panadería</desc>
+  </wpt>
+
+</gpx>
+

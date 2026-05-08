@@ -146,6 +146,11 @@ struct ClientTabCoordinator: View {
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
+        .onAppear {
+            GeofenceService.shared.configure(user: currentUser)
+            GeofenceService.shared.startMonitoring()
+        }
+        .onDisappear { GeofenceService.shared.stopMonitoring() }
     }
 }
 

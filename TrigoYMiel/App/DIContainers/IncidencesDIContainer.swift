@@ -21,4 +21,13 @@ final class IncidencesDIContainer {
            
         )
     }
+    
+    func makeMyIncidencesViewModel(currentUser: User) -> MyIncidencesViewModel {
+        return MyIncidencesViewModel(
+            currentUser: currentUser,
+            getMyIncidencesUseCase: GetMyIncidencesUseCase(
+                incidenceRepository: incidenceRepository
+            )
+        )
+     }
 }
