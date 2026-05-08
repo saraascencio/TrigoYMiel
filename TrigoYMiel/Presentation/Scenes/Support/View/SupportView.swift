@@ -25,6 +25,7 @@ struct SupportView: View {
     //var onCartTap: () -> Void = {}
     @State private var showProfileMenu = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var isShowingMyIncidences = false
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -44,6 +45,7 @@ struct SupportView: View {
                             descriptionSection
                             photoSection
                             submitButton
+                            myIncidencesButton
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 20)
@@ -87,6 +89,16 @@ struct SupportView: View {
                     }
                 }
             }
+            .navigationDestination(isPresented: $isShowingMyIncidences) {
+                MyIncidencesView(
+                    viewModel: MyIncidencesViewModel(
+                        currentUser: viewModel.currentUser,
+                        getMyIncidencesUseCase: GetMyIncidencesUseCase(
+                            incidenceRepository: IncidenceRepositoryImpl()
+                        )
+                    )
+                )
+            }
         }
     }
     
@@ -114,6 +126,35 @@ struct SupportView: View {
         .padding(.horizontal, 16)
         .padding(.top, 12)
     }
+    
+    private var myIncidencesButton: some View {
+          Button {
+              isShowingMyIncidences = true
+          } label: {
+              HStack(spacing: 8) {
+                  Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                      .font(.system(size: 15))
+                      .foregroundColor(Color("ColorPrimary"))
+                  Text("Ver mis reportes anteriores")
+                      .font(.system(size: 14, weight: .medium))
+                      .foregroundColor(Color("ColorPrimary"))
+                  Spacer()
+                  Image(systemName: "chevron.right")
+                      .font(.system(size: 13))
+                      .foregroundColor(Color("ColorPrimary").opacity(0.5))
+              }
+              .padding(14)
+              .background(
+                  RoundedRectangle(cornerRadius: 14)
+                      .fill(Color.white)
+                      .overlay(
+                          RoundedRectangle(cornerRadius: 14)
+                              .stroke(Color("ColorPrimary").opacity(0.15), lineWidth: 1)
+                      )
+              )
+          }
+          .buttonStyle(.plain)
+      }
     
     // MARK: - Canal de contacto (cuadros del MISMO tamaño)
     private var channelSection: some View {
