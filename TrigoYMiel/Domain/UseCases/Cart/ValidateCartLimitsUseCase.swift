@@ -6,7 +6,6 @@
 //
 
 import Foundation
-// MARK: - ValidateCartLimitsUseCase
 final class ValidateCartLimitsUseCase {
     
     private let cartRepository: CartRepository
@@ -35,11 +34,14 @@ final class ValidateCartLimitsUseCase {
         if countToday >= 3 { throw AppError.dailyLimitReached }
         
 
+        // MARK: - Rangos por cliente
         if tier == .wholesale {
-            if quantityToAdd < 75 || quantityToAdd > 100 {
-                throw AppError.unknown("Para mayoristas, la cantidad debe ser entre 75 y 100 por producto.")
+            // El mayorista puede comprar desde 1 hasta 100.
+            if quantityToAdd < 1 || quantityToAdd > 100 {
+                throw AppError.unknown("Para promociones mayoristas, la cantidad debe ser entre 1 y 100 por producto.")
             }
         } else {
+            // El minorista se mantiene máximo 74
             if quantityToAdd < 1 || quantityToAdd > 74 {
                 throw AppError.unknown("Para minoristas, la cantidad debe ser entre 1 y 74 unidades.")
             }

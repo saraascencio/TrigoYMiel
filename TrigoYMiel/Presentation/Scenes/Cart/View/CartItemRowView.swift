@@ -7,23 +7,24 @@
 import SwiftUI
 
 struct CartItemRowView: View {
-
-    let item:         CartItem
-    let promotion:    Promotion?
-    let onRemove:     () -> Void
+    let item: CartItem
+    let promotion: Promotion?
+    let onRemove: () -> Void
     let onQuantityChange: (Int) -> Void
-
+    let isWholesaleCustomer: Bool   
+    
     @State private var quantityInput: String = ""
     @FocusState private var isFocused: Bool
-
+    
     var body: some View {
         HStack(spacing: 12) {
-
             // MARK: Imagen
             AsyncImage(url: URL(string: item.product.imageURL)) { phase in
                 switch phase {
-                case .success(let img): img.resizable().scaledToFill()
-                case .failure:         Color("ColorAccent").opacity(0.3)
+                case .success(let img):
+                    img.resizable().scaledToFill()
+                case .failure:
+                    Color("ColorAccent").opacity(0.3)
                 default:
                     Color("ColorAccent").opacity(0.2)
                         .overlay(ProgressView().scaleEffect(0.7))
@@ -31,16 +32,15 @@ struct CartItemRowView: View {
             }
             .frame(width: 90, height: 90)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-
+            
             // MARK: Info
             VStack(alignment: .leading, spacing: 6) {
-
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.product.name)
                             .font(.subheadline.bold())
                             .foregroundColor(Color("ColorPrimary"))
-
+                        
                         if let promo = promotion {
                             Text("\(promo.formattedDiscount) descuento")
                                 .font(.caption.bold())
@@ -52,20 +52,22 @@ struct CartItemRowView: View {
                         }
                     }
                     Spacer()
+                    
                     Button(action: onRemove) {
                         Image(systemName: "trash")
                             .font(.subheadline)
                             .foregroundColor(Color("ColorPrimary").opacity(0.4))
                     }
                 }
-
+                
                 // Precio con o sin descuento
-                if let promo = promotion {
+                if let promo = promotion, shouldApplyDiscount(promo) {
                     HStack(spacing: 6) {
                         Text(item.formattedSubtotal)
                             .font(.caption)
                             .foregroundColor(Color("ColorPrimary").opacity(0.4))
                             .strikethrough()
+                        
                         Text(discountedSubtotal(promo))
                             .font(.subheadline.bold())
                             .foregroundColor(Color("ColorSecondary"))
@@ -75,11 +77,11 @@ struct CartItemRowView: View {
                         .font(.subheadline)
                         .foregroundColor(Color("ColorPrimary").opacity(0.8))
                 }
-
-                // MARK: Selector cantidad con input manual
+                
+                // MARK: Selector de cantidad
                 HStack(spacing: 0) {
                     Button {
-                        let minAllowed = (item.quantity >= 75) ? 75 : 1
+                        let minAllowed = 1
                         let newQty = max(minAllowed, item.quantity - 1)
                         if newQty != item.quantity {
                             quantityInput = "\(newQty)"
@@ -93,7 +95,7 @@ struct CartItemRowView: View {
                             .background(Color("ColorPrimary").opacity(0.10))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-
+                    
                     TextField("", text: $quantityInput)
                         .font(.subheadline.bold())
                         .foregroundColor(Color("ColorPrimary"))
@@ -105,16 +107,14 @@ struct CartItemRowView: View {
                             let filtered = value.filter { $0.isNumber }
                             if filtered != value { quantityInput = filtered }
                         }
-                        .onSubmit {
-                            commitInput()
-                        }
+                        .onSubmit { commitInput() }
                         .onChange(of: isFocused) { focused in
                             if !focused { commitInput() }
                         }
-
+                    
                     Button {
-                        let maxAllowed = (item.quantity >= 75) ? 100 : 74
-                        let finalMax = min(maxAllowed, item.product.stock) // No superar stock
+                        let maxAllowed = isWholesaleCustomer ? 100 : 74
+                        let finalMax = min(maxAllowed, item.product.stock)
                         let newQty = min(finalMax, item.quantity + 1)
                         
                         if newQty != item.quantity {
@@ -141,17 +141,22 @@ struct CartItemRowView: View {
             if !isFocused { quantityInput = "\(value)" }
         }
     }
-
+    
+    // MARK: - Helpers
+    private func shouldApplyDiscount(_ promo: Promotion) -> Bool {
+        if promo.wholesaleOnly {
+            return isWholesaleCustomer && item.quantity >= 75
+        }
+        return true
+    }
+    
     private func commitInput() {
-        // Si el campo está vacío o es 0, parsed será 1 por defecto
         let parsed = Int(quantityInput) ?? 1
         
-        let isWholesale = item.quantity >= 75
-        let minAllowed = isWholesale ? 75 : 1
-        let maxAllowed = isWholesale ? 100 : 74
+        let maxAllowed = isWholesaleCustomer ? 100 : 74
         let finalMax = min(maxAllowed, item.product.stock)
+        let minAllowed = 1
         
-        // Aquí el clamped asegura que el 0 se convierta en 1 automáticamente
         let clamped = max(minAllowed, min(parsed, finalMax))
         
         quantityInput = "\(clamped)"
@@ -162,7 +167,7 @@ struct CartItemRowView: View {
     }
     
     private func discountedSubtotal(_ promo: Promotion) -> String {
-        let discounted = item.subtotal * (1 - promo.discountPercentage / 100)
+        let discounted = item.subtotal * (1 - Double(promo.discountPercentage) / 100.0)
         return String(format: "$%.2f", discounted)
     }
 }

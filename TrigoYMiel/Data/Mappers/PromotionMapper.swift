@@ -7,13 +7,10 @@
 import Foundation
 import FirebaseFirestore
 
-// MARK: - PromotionMapper
 struct PromotionMapper {
 
     // MARK: Firestore → Domain
     static func toDomain(from data: [String: Any], id: String) throws -> Promotion {
-
-        // validar vigencia
         guard
             let startTS = data["startDate"] as? Timestamp,
             let endTS   = data["endDate"]   as? Timestamp
@@ -42,6 +39,7 @@ struct PromotionMapper {
     // MARK: Domain → Firestore
     static func toFirestore(_ promotion: Promotion) -> [String: Any] {
         [
+            
             "description":          promotion.description,
             "discountPercentage":   promotion.discountPercentage,
             "wholesaleOnly":        promotion.wholesaleOnly,

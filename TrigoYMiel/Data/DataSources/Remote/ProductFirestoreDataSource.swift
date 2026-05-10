@@ -141,13 +141,29 @@ final class ProductFirestoreDataSource {
         }
     }
     
+    // MARK: - Promociones
     func getActivePromotions() async throws -> [Promotion] {
+     
         let snapshot = try await client.promotionsCollection
             .whereField("isActive", isEqualTo: true)
             .getDocuments()
         
-        return snapshot.documents.compactMap { doc in
-            try? doc.data(as: Promotion.self)
+        var promotions: [Promotion] = []
+        for doc in snapshot.documents {
+         
+            do {
+                let promo = try doc.data(as: Promotion.self)
+                promotions.append(promo)
+            
+            } catch {
+               
+                let data = doc.data()
+                if let promo = try? PromotionMapper.toDomain(from: data, id: doc.documentID) {
+                promotions.append(promo)
+                  
+                }
+            }
         }
+        return promotions
     }
 }

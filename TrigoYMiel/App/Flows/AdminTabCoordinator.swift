@@ -77,9 +77,10 @@ struct AdminTabCoordinator: View {
                             }
                         }
                 }
+                
             }
             
-            // Navegación y fullScreenCover fuera del ZStack (importante)
+        
             .fullScreenCover(isPresented: $isShowingIncidences) {
                 NavigationStack {
                     IncidencesView(

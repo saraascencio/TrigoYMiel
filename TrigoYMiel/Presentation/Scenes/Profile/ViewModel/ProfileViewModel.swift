@@ -34,18 +34,18 @@ final class ProfileViewModel: ObservableObject {
 
         // MARK: - Init
 
-        // Init con usuario (para cuando ya lo tienes fresco)
+     
         convenience init(currentUser: User, authRepository: AuthRepository) {
             self.init(authRepository: authRepository)
             self.loadUserData(currentUser)
         }
 
-        // Init recomendado (sin usuario → carga fresco)
+    
         init(authRepository: AuthRepository) {
             self.authRepository = authRepository
         }
 
-        // MARK: - Cargar datos frescos
+        // MARK: - Cargar datos
         func loadUserData(_ user: User? = nil) {
             if let user = user {
                 assignUser(user)
@@ -145,7 +145,7 @@ final class ProfileViewModel: ObservableObject {
 
            
             try await updateUserInFirestore(user)
-            try? (authRepository as? AuthRepositoryImpl)?.updateLocalSession(user)
+            (authRepository as? AuthRepositoryImpl)?.updateLocalSession(user)
 
             savedSuccess = true
 

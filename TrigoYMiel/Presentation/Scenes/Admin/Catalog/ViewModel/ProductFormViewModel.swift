@@ -196,7 +196,6 @@ final class ProductFormViewModel: ObservableObject {
     }
 
     // MARK: - Save
-
     func save() async {
         guard validateAll() else { return }
 
@@ -205,8 +204,9 @@ final class ProductFormViewModel: ObservableObject {
 
         do {
             let finalURL = try await uploadImageIfNeeded()
-            imageURL     = finalURL
-            let product  = buildProduct(imageURL: finalURL)
+            imageURL = finalURL
+
+            let product = buildProduct(imageURL: finalURL)
 
             if isEditing {
                 let updated = try await updateProductUseCase.execute(product)
@@ -215,15 +215,16 @@ final class ProductFormViewModel: ObservableObject {
                 let created = try await createProductUseCase.execute(product)
                 onSave(created)
             }
+
         } catch let error as AppError {
             errorMessage = error.errorDescription
+
         } catch {
             errorMessage = error.localizedDescription
         }
 
         isSubmitting = false
     }
-
     // MARK: - Helpers
 
     func prefillFirstCategory(_ categories: [ProductCategory]) {

@@ -20,6 +20,8 @@ struct ProductFormView: View {
     @State private var localImageURL:    String            = ""
     @State private var localImageError:  String?           = nil
     
+
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -313,8 +315,11 @@ struct ProductFormView: View {
 
                     // MARK: Botón guardar
                     Button {
-                        Task { await viewModel.save() }
-                    } label: {
+                        Task {
+                            await viewModel.save()
+                        }
+                    }
+                    label: {
                         Group {
                             if viewModel.isSubmitting || isUploadingImage {
                                 ProgressView().tint(.white)
@@ -340,12 +345,14 @@ struct ProductFormView: View {
             .background(Color("ColorBackground").ignoresSafeArea())
             .navigationTitle(viewModel.isEditing ? "Editar producto" : "Crear producto")
             .navigationBarTitleDisplayMode(.large)
+            
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
                         .foregroundColor(Color("ColorPrimary"))
                 }
             }
+        
         }
         .onAppear {
             viewModel.prefillFirstCategory(categories)
