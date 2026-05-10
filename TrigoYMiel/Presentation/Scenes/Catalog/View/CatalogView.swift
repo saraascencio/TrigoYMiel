@@ -226,7 +226,7 @@ struct CatalogView: View {
                 ForEach(products) { product in
                     CatalogProductRow(
                         product: product,
-                        isOnPromotion: viewModel.shouldShowPromotion(for: product) // <--- Aquí está la clave
+                        promoType: viewModel.promotionType(for: product)
                     ) {
                         selectProduct(product)
                     }
@@ -267,7 +267,7 @@ struct CatalogView: View {
                     ForEach(viewModel.searchResults) { product in
                         CatalogProductRow(
                             product: product,
-                            isOnPromotion: viewModel.shouldShowPromotion(for: product)
+                            promoType: viewModel.promotionType(for: product)
                         ) {
                             selectProduct(product)
                         }
@@ -326,29 +326,29 @@ struct PopularProductCard: View {
 
 struct CatalogProductRow: View {
     let product: Product
-    let isOnPromotion: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                                            
-                                            if isOnPromotion {
-                                                Text("PROMO")
-                                                    .font(.system(size: 10, weight: .bold))
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.red)
-                                                    .foregroundColor(.white)
-                                                    .clipShape(Capsule())
-                                            }
-                                        }
-                    Text(product.name)
-                        .font(.subheadline.bold())
-                        .foregroundColor(Color("ColorPrimary"))
-                    Text(product.description)
+        let promoType: PromotionType 
+        let onTap: () -> Void
+        
+        var body: some View {
+            Button(action: onTap) {
+                HStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        
+                        // MARK: Badge Dinámico
+                        if promoType != .none {
+                            Text(promoType == .wholesale ? "MAYORISTA" : "PROMO")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(promoType == .wholesale ? Color.blue : Color.red)
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
+                        }
+                        
+                        Text(product.name)
+                            .font(.subheadline.bold())
+                            .foregroundColor(Color("ColorPrimary"))
+                        Text(product.description)
                         .font(.caption)
                         .foregroundColor(Color("ColorPrimary").opacity(0.55))
                         .lineLimit(2)

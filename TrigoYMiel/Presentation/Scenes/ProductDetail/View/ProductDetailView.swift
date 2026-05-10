@@ -100,54 +100,53 @@ struct ProductDetailView: View {
                             .foregroundColor(Color("ColorPrimary"))
 
                         QuantitySelectorView(
-                                            quantity: $viewModel.quantity,
-                                            minimum:  viewModel.isWholesale ? 75 : 1,
-                                            maximum:  min(viewModel.isWholesale ? 100 : 74, viewModel.product.stock)
-                                        )
-                                        .focused($isInputFocused) // 2. VINCULA EL FOCO
-                                        .onChange(of: isInputFocused) { isFocused in
-                                            if !isFocused {
-                                                viewModel.commitQuantity() // 3. VALIDA AL SALIR
-                                        }
+                            quantity: $viewModel.quantity,
+                            minimum: 1,
+                
+                            maximum: viewModel.isWholesale ? min(100, viewModel.product.stock) : min(74, viewModel.product.stock)
+                        )
+                        .focused($isInputFocused)
+                        .onChange(of: isInputFocused) { isFocused in
+                            if !isFocused {
+                                viewModel.commitQuantity()
+                            }
                         }
                         .opacity(viewModel.isBlockedByOrder ? 0.5 : 1.0)
                         .disabled(viewModel.isBlockedByOrder)
 
-                        // Mensajes informativos de stock y límites[cite: 1]
+                        // Mensajes informativos de stock y límites
                         Group {
                             if viewModel.product.stock <= 0 {
                                 Text("Producto agotado temporalmente")
                                     .foregroundColor(.red)
-                            } else if viewModel.product.stock < (viewModel.isWholesale ? 75 : 1) {
-                                Text("Stock insuficiente para tu tipo de cliente")
-                                    .foregroundColor(.orange)
-                            } else if viewModel.isWholesale {
-                                Text("Límite mayorista: 75-100 unidades (Máximo 1000 en total)")
+                            }  else if viewModel.isWholesale {
+                                Text("El descuento mayorista aplica desde 75 a 100 unidades por producto.")
                             } else {
                                 Text("Límite minorista: máximo 74 unidades")
                             }
+                            
                         }
                         .font(.caption)
                         .foregroundColor(Color("ColorPrimary").opacity(0.45))
                     }
                     
                     // MARK: Preview descuento mayoreo
-                    if let promo = viewModel.activePromotion {
+                    if let promo = viewModel.effectivePromotion {
                         promotionDiscountPreview(promo)
                     }
                     
                     Divider()
 
                     // Precio total
-                    // Precio total
+ 
                     HStack {
                         Text("Precio total:")
                             .font(.headline)
                             .foregroundColor(Color("ColorPrimary"))
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
-                            // Nueva lógica: Si hay promo y se cumplen sus condiciones (appliesNow)
-                            if let promo = viewModel.activePromotion,
+                            
+                            if let promo = viewModel.effectivePromotion,
                                (!promo.wholesaleOnly || viewModel.quantity >= 75) {
                                 
                                 Text(viewModel.totalPriceFormatted)
@@ -159,7 +158,7 @@ struct ProductDetailView: View {
                                     .font(.title3.bold())
                                     .foregroundColor(Color("ColorSecondary"))
                             } else {
-                                // Precio normal si no hay promo activa
+                               
                                 Text(viewModel.totalPriceFormatted)
                                     .font(.title3.bold())
                                     .foregroundColor(Color("ColorPrimary"))
@@ -201,13 +200,13 @@ struct ProductDetailView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .overlay { successOverlay }
+       
     }
 
     // MARK: - Preview descuento mayoreo
 
     private func promotionDiscountPreview(_ promo: Promotion) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Encabezado dinámico: Si no es exclusiva, no asustamos al minorista con la palabra "Mayorista"
             HStack(spacing: 8) {
                 Image(systemName: "tag.fill")
                     .foregroundColor(Color("ColorSecondary"))
@@ -215,11 +214,9 @@ struct ProductDetailView: View {
                     .font(.subheadline.bold())
                     .foregroundColor(Color("ColorPrimary"))
             }
-
-            // ¿Se aplica el descuento en este momento?
-            // Se aplica si la promo es para todos O si el usuario ya alcanzó las 75 unidades
+            
             let appliesNow = !promo.wholesaleOnly || viewModel.quantity >= 75
-
+            
             if appliesNow {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -242,7 +239,6 @@ struct ProductDetailView: View {
                     }
                 }
             } else {
-                // Este mensaje solo saldrá si la promo requiere 75 unidades y el usuario tiene menos
                 Text("Agrega al menos 75 unidades para aplicar el \(promo.formattedDiscount) de descuento.")
                     .font(.caption)
                     .foregroundColor(Color("ColorPrimary").opacity(0.55))
@@ -258,17 +254,16 @@ struct ProductDetailView: View {
 
     private var bottomActionButton: some View {
         Button {
-                // 1. Forzamos el cierre del teclado
-                // Esto dispara automáticamente el 'commitQuantity' a través del .onChange(of: isFocused)
+                
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                                 to: nil, from: nil, for: nil)
                 
-                // 2. Pequeño delay para asegurar que quantityInput se procesó y validó
+       
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     
                         viewModel.addToCart()
                         
-                        // 3. Si no hubo error, cerramos la vista después del feedback
+             
                         if viewModel.errorMessage == nil {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                                 dismiss()
@@ -291,8 +286,8 @@ struct ProductDetailView: View {
                         if !viewModel.isBlockedByOrder {
                             Spacer()
                             
-                            // Cambiamos la condición para que no dependa solo de isWholesale
-                            if let promo = viewModel.activePromotion,
+                     
+                            if let promo = viewModel.effectivePromotion,
                                (!promo.wholesaleOnly || viewModel.quantity >= 75) {
                                 
                                 VStack(alignment: .trailing, spacing: 1) {

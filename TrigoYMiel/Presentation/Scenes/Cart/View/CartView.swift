@@ -94,14 +94,11 @@ struct CartView: View {
                                     CartItemRowView(
                                         item: item,
                                         promotion: promo,
-                                        onRemove: {
-                                            Task { await viewModel.removeItem(item) }
-                                        },
+                                        onRemove: { Task { await viewModel.removeItem(item) } },
                                         onQuantityChange: { newQty in
-                                            Task {
-                                                await viewModel.updateQuantity(item, newQuantity: newQty)
-                                            }
-                                        }
+                                            Task { await viewModel.updateQuantity(item, newQuantity: newQty) }
+                                        },
+                                        isWholesaleCustomer: viewModel.isWholesaleCustomer   
                                     )
                                 }
                             }.padding(.horizontal, 20)
@@ -166,7 +163,7 @@ struct CartView: View {
         )) {
             Button("Entendido", role: .cancel) {}
         } message: {
-            // Aplicamos la limpieza directamente aquí o en el ViewModel
+    
             Text((viewModel.errorMessage ?? "")
                 .replacingOccurrences(of: "Unknown error: ", with: "", options: .caseInsensitive)
                 .replacingOccurrences(of: "unknown", with: "", options: .caseInsensitive)

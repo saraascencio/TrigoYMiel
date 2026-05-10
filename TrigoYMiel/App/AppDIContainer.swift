@@ -25,4 +25,5 @@ final class AppDIContainer: ObservableObject {
     let wholesaleDIContainer     = WholesaleDIContainer()
     let incidencesDIContainer = IncidencesDIContainer()
     let profileDIContainer       = ProfileDIContainer()
+    
 }

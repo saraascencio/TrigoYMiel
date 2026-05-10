@@ -10,7 +10,7 @@ final class CatalogDIContainer {
     
     private let productRepository: ProductRepository = ProductRepositoryImpl()
     
-    // Necesitamos el repositorio de autenticación
+    
     private let authRepository: AuthRepository = AuthRepositoryImpl()
     
     // MARK: - Auth
@@ -43,8 +43,34 @@ final class CatalogDIContainer {
             getPopularProductsUseCase: makeGetPopularProductsUseCase(),
             searchProductsUseCase: makeSearchProductsUseCase(),
             getProductsByCategoryUseCase: makeGetProductsByCategoryUseCase()
-         
+            
             
         )
     }
+    
+    func makeCreateProductUseCase() -> CreateProductUseCase {
+            CreateProductUseCase(productRepository: productRepository)
+    }
+
+    func makeUpdateProductUseCase() -> UpdateProductUseCase {
+            UpdateProductUseCase(productRepository: productRepository)
+    }
+
+    func makeDeleteProductUseCase() -> DeleteProductUseCase {
+            DeleteProductUseCase(productRepository: productRepository)
+    }
+    
+    func makeProductFormViewModel(
+        mode:   ProductFormMode,
+        onSave: @escaping (Product) -> Void
+    ) -> ProductFormViewModel {
+        ProductFormViewModel(
+            mode:                 mode,
+            createProductUseCase: makeCreateProductUseCase(),
+            updateProductUseCase: makeUpdateProductUseCase(),
+            deleteProductUseCase: makeDeleteProductUseCase(),
+            onSave:               onSave
+        )
+    }
+    
 }

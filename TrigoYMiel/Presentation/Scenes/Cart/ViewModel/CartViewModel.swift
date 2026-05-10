@@ -59,8 +59,7 @@ final class CartViewModel: ObservableObject {
             do {
                 let all = try await promotionDataSource.getActivePromotions()
                 promotions = all.filter { promo in
-                    // Regla: Si es wholesaleOnly, el usuario DEBE ser mayorista.
-                    // Si NO es wholesaleOnly, entra para todos.
+             
                     let canView = !promo.wholesaleOnly || isWholesaleCustomer
                     return promo.isCurrentlyValid && canView
                 }
@@ -99,7 +98,7 @@ final class CartViewModel: ObservableObject {
         cartItems.reduce(0) { $0 + $1.quantity }
     }
     
-
+    
     var isWholesaleEligible: Bool {
         guard isWholesaleCustomer else { return false }
         
@@ -112,7 +111,7 @@ final class CartViewModel: ObservableObject {
     
     // MARK: - Pickup sync
     func syncPickupDate() {
-        let minDate = minPickupDate // Usamos la regla dinámica
+        let minDate = minPickupDate
         if pickupDate < minDate {
             pickupDate = minDate
         }
@@ -134,24 +133,37 @@ final class CartViewModel: ObservableObject {
     
     // MARK: - Promotions per item
     func activePromotion(for product: Product) -> Promotion? {
-        // 1. Buscamos en el array de promociones cargadas
-        return promotions.first { promo in
+        let now = Date()
+        
+ 
+        let candidates = promotions.filter { promo in
+
+            guard promo.isActive,
+                  promo.startDate <= now,
+                  now <= promo.endDate else { return false }
             
-            // 2. Verificamos si el ID del producto está incluido.
-            // Usamos 'contains' de forma que funcione tanto con Strings como con Referencias mapeadas.
-            let isIncluded = promo.applicableProductIds.map { "\($0)" }.contains { idString in
-                // Esto limpia la ruta completa (si existe) y deja solo el ID final
-                idString.contains(product.id)
+
+            let canView = !promo.wholesaleOnly || isWholesaleCustomer
+            guard canView else { return false }
+            
+   
+            let productMatches = promo.applicableProductIds.contains { id in
+                let idStr = "\(id)".trimmingCharacters(in: .whitespacesAndNewlines)
+                return idStr.contains(product.id) || product.id.contains(idStr)
             }
             
-            // 3. Regla de visibilidad:
-            // Si NO es exclusiva de mayorista, cualquier usuario la aplica.
-            // Si SI es exclusiva, el usuario debe tener el tier .wholesale.
-            let canApply = !promo.wholesaleOnly || isWholesaleCustomer
-            
-            // 4. Retornamos la promo si cumple fecha, inclusión y permiso
-            return promo.isCurrentlyValid && isIncluded && canApply
+            return productMatches
         }
+        
+        // Priorizamos: Mayorista → primero las wholesaleOnly
+        if isWholesaleCustomer {
+            if let wholesalePromo = candidates.first(where: { $0.wholesaleOnly }) {
+                return wholesalePromo
+            }
+        }
+        
+        // Sino devolvemos la de mayor descuento
+        return candidates.max(by: { $0.discountPercentage < $1.discountPercentage })
     }
     
     // MARK: - Base
@@ -166,23 +178,26 @@ final class CartViewModel: ObservableObject {
     }
     
     var totalDiscount: Double {
-        // Quitamos el guard que bloqueaba todo si no eras mayorista con 75 unidades
-        return cartItems.reduce(0) { acc, item in
-            guard let promo = activePromotion(for: item.product) else { return acc }
-            
-            // Lógica de aplicación:
-            // 1. Si es promo mayorista: requiere ser mayorista Y tener >= 75 unidades
-            // 2. Si es promo abierta: aplica siempre
-            let applies = !promo.wholesaleOnly || (isWholesaleCustomer && totalUnits >= 75)
-            
-            if applies {
-                let discount = item.subtotal * (promo.discountPercentage / 100)
-                return acc + discount
+        cartItems.reduce(0.0) { acc, item in
+            guard let promo = activePromotion(for: item.product) else {
+                return acc
             }
             
-            return acc
+            let shouldApply: Bool = {
+                if promo.wholesaleOnly {
+                    return isWholesaleCustomer && item.quantity >= 75
+                } else {
+                    return true
+                }
+            }()
+            
+            guard shouldApply else { return acc }
+            
+            let discountAmount = item.subtotal * Double(promo.discountPercentage) / 100.0
+            return acc + discountAmount
         }
     }
+    
     var total: Double {
         totalBeforeDiscount - totalDiscount
     }
@@ -196,8 +211,7 @@ final class CartViewModel: ObservableObject {
         self.errorMessage = nil
         
         do {
-            // 1. Validar con el UseCase
-            // Filtramos el carrito actual para que el UseCase no sume la cantidad vieja con la nueva
+       
             try await addToCartUseCase.execute(
                 product: item.product,
                 quantity: newQuantity,
@@ -206,24 +220,24 @@ final class CartViewModel: ObservableObject {
                 tier: currentUser.tier
             )
             
-            // 2. Crear una copia del item con la nueva cantidad
+            
             var updatedItem = item
             updatedItem.quantity = newQuantity
             
-            // 3. Usar el método existente en tu Repositorio
+            
             try await cartRepository.updateItem(updatedItem, userId: currentUser.id)
             
-            // 4. Refrescar la lista
+           
             await loadCart()
             
         } catch let error as AppError {
-            // Limpieza de mensaje para evitar el "Error inesperado"
+           
             let rawMessage = error.errorDescription ?? "Límite alcanzado"
             self.errorMessage = rawMessage
                 .replacingOccurrences(of: "Unknown error: ", with: "", options: .caseInsensitive)
                 .replacingOccurrences(of: "unknown", with: "", options: .caseInsensitive)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-                
+            
         } catch {
             self.errorMessage = "No se pudo actualizar la cantidad."
         }
@@ -249,8 +263,8 @@ final class CartViewModel: ObservableObject {
         
         isPlacing = true
         if cartItems.isEmpty || cartItems.contains(where: { $0.quantity <= 0 }) {
-                self.errorMessage = "El carrito contiene productos inválidos."
-                return
+            self.errorMessage = "El carrito contiene productos inválidos."
+            return
         }
         
         do {
@@ -278,12 +292,9 @@ final class CartViewModel: ObservableObject {
         let cal = Calendar.current
         let now = Date()
         
-    
         if isWholesaleCustomer && totalUnits >= 75 {
             return cal.date(byAdding: .day, value: 3, to: now) ?? now
         }
-        
-     
         return now
     }
 }
