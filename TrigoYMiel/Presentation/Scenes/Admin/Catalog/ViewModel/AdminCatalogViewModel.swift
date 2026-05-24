@@ -79,8 +79,12 @@ final class AdminCatalogViewModel: ObservableObject {
             let (prods, cats, promos) = try await (prodsTask, catsTask, promosTask)
             
             products       = prods
-            categoriesList = cats
-            categoriesMap  = Dictionary(uniqueKeysWithValues: cats.map { ($0.id, $0.name) })
+            categoriesList = cats.sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+            categoriesMap = Dictionary(
+                uniqueKeysWithValues: categoriesList.map { ($0.id, $0.name) }
+            )
             promotions     = promos
         } catch let error as AppError {
             errorMessage = error.errorDescription
@@ -106,7 +110,7 @@ final class AdminCatalogViewModel: ObservableObject {
         productToEdit   = nil
     }
     
-    func deleteProduct(_ product: Product) async {
+    /*func deleteProduct(_ product: Product) async {
         do {
             try await DeleteProductUseCase(
                 productRepository: ProductRepositoryImpl()
@@ -127,6 +131,36 @@ final class AdminCatalogViewModel: ObservableObject {
                     isPopular:   old.isPopular
                 )
             }
+        } catch let error as AppError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }*/
+    
+    func deleteProduct(_ product: Product) async {
+        do {
+            let updated = Product(
+                id:          product.id,
+                name:        product.name,
+                description: product.description,
+                ingredients: product.ingredients,
+                unitPrice:   product.unitPrice,
+                stock:       product.stock,
+                isAvailable: false,
+                categoryId:  product.categoryId,
+                imageURL:    product.imageURL,
+                isPopular:   product.isPopular
+            )
+
+            _ = try await UpdateProductUseCase(
+                productRepository: ProductRepositoryImpl()
+            ).execute(updated)
+
+            if let index = products.firstIndex(where: { $0.id == product.id }) {
+                products[index] = updated
+            }
+
         } catch let error as AppError {
             errorMessage = error.errorDescription
         } catch {

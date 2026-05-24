@@ -35,7 +35,7 @@ struct PickupTimeSelectorView: View {
                     
                     Text(isWholesaleFlow
                          ? "Mínimo 3 días de anticipación"
-                         : "Horario SV: 10:00 am - 8:00 pm")
+                         : "Horario SV: 10:00 am - 9:00 pm")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
@@ -93,7 +93,7 @@ struct PickupTimeSelectorView: View {
     private var calendarEnd: Date {
         let calendar = elSalvadorCalendar
         var comps = calendar.dateComponents([.year, .month, .day], from: Date())
-        comps.hour = 20
+        comps.hour = 21
         comps.minute = 0
         return calendar.date(from: comps) ?? Date()
     }

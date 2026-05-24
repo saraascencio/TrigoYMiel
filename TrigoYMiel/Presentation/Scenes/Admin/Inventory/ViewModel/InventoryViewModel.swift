@@ -65,6 +65,9 @@ final class InventoryViewModel: ObservableObject {
         errorMessage = nil
         do {
             inventory = try await getInventoryUseCase.execute()
+            inventory.sort {
+                $0.productName.localizedCaseInsensitiveCompare($1.productName) == .orderedAscending
+            }
             await loadAvailabilityMap()
         } catch let error as AppError {
             errorMessage = error.errorDescription
