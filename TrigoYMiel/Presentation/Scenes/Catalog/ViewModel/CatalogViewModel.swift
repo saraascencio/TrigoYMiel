@@ -45,6 +45,14 @@ final class CatalogViewModel: ObservableObject {
             self.getProductsByCategoryUseCase = getProductsByCategoryUseCase
         }
         
+        var promotionalProducts: [Product] {
+            allProducts.filter { product in
+                product.isAvailable &&
+                shouldShowPromotion(for: product)
+            }
+        }
+    
+    
         // MARK: - Promoción para Badge
         func promotionType(for product: Product) -> PromotionType {
             let now = Date()
@@ -108,8 +116,14 @@ final class CatalogViewModel: ObservableObject {
                 let (products, popular, cats, user, promos) = try await (productsTask, popularTask, catsTask, userTask, promosTask)
                 
                 self.allProducts = products.filter { $0.isAvailable }
+                    .sorted { $0.name < $1.name }
                 self.popularProducts = popular
+                    .filter { $0.isAvailable }
+                    .sorted {
+                        $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+                    }
                 self.categories = cats.filter { $0.isActive }
+                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
                 self.currentUser = user
                 self.activePromotions = promos
 
@@ -122,16 +136,24 @@ final class CatalogViewModel: ObservableObject {
             
             isLoading = false
         }
+    
     func search() async {
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+
         guard !trimmed.isEmpty else {
             searchResults = []
-            isSearching   = false
+            isSearching = false
             return
         }
+
         isSearching = true
+
         do {
             searchResults = try await searchProductsUseCase.execute(query: trimmed)
+                .filter { $0.isAvailable }
+                .sorted {
+                    $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+                }
         } catch {
             searchResults = allProducts.filter {
                 $0.name.localizedCaseInsensitiveContains(trimmed)

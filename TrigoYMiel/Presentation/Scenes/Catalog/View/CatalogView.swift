@@ -23,7 +23,7 @@ struct CatalogView: View {
         var calendar = Calendar.current
         calendar.timeZone = TimeZone(identifier: "America/El_Salvador") ?? TimeZone(identifier: "CST")!
         let hour = calendar.component(.hour, from: Date())
-        return hour >= 9 && hour < 20
+        return hour >= 10 && hour < 21
     }
     
     var body: some View {
@@ -107,15 +107,20 @@ struct CatalogView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 60)
                         }
-                        else if viewModel.isSearching {
+                        else if !viewModel.searchText.isEmpty {
                             searchResultsSection
-                        } else {
+                        }
+                        else {
                             // MARK: Categorías
                             categoriasSection
                             
                             // MARK: Populares
                             if !viewModel.popularProducts.isEmpty {
                                 popularesSection
+                            }
+                            
+                            if !viewModel.promotionalProducts.isEmpty {
+                                promocionesSection
                             }
                             
                             // MARK: Por categoría
@@ -203,7 +208,36 @@ struct CatalogView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(viewModel.popularProducts) { product in
-                        PopularProductCard(product: product) {
+                        PopularProductCard(
+                            product: product,
+                            promoType: viewModel.promotionType(for: product)
+                        ) {
+                            selectProduct(product)
+                        }
+                        .opacity(isStoreOpen ? 1 : 0.7)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+        .padding(.bottom, 24)
+    }
+    
+    private var promocionesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            Text("Promociones")
+                .font(.title3.bold())
+                .foregroundColor(Color("ColorPrimary"))
+                .padding(.horizontal, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(viewModel.promotionalProducts) { product in
+                        PopularProductCard(
+                            product: product,
+                            promoType: viewModel.promotionType(for: product)
+                        ) {
                             selectProduct(product)
                         }
                         .opacity(isStoreOpen ? 1 : 0.7)
@@ -289,11 +323,24 @@ struct CatalogView: View {
 
 struct PopularProductCard: View {
     let product: Product
+    let promoType: PromotionType?
     let onTap: () -> Void
     
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
+                
+                if let promoType, promoType != .none {
+                    Text(promoType == .wholesale ? "MAYORISTA" : "PROMO")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(promoType == .wholesale ? Color.blue : Color.red)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+                
+                
                 AsyncImage(url: URL(string: product.imageURL)) { phase in
                     switch phase {
                     case .success(let img): img.resizable().scaledToFill()
