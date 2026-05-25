@@ -143,27 +143,72 @@ final class ProductFirestoreDataSource {
     
     // MARK: - Promociones
     func getActivePromotions() async throws -> [Promotion] {
-     
+        
         let snapshot = try await client.promotionsCollection
             .whereField("isActive", isEqualTo: true)
             .getDocuments()
         
         var promotions: [Promotion] = []
         for doc in snapshot.documents {
-         
+            
             do {
                 let promo = try doc.data(as: Promotion.self)
                 promotions.append(promo)
-            
+                
             } catch {
-               
+                
                 let data = doc.data()
                 if let promo = try? PromotionMapper.toDomain(from: data, id: doc.documentID) {
-                promotions.append(promo)
-                  
+                    promotions.append(promo)
+                    
                 }
             }
         }
         return promotions
     }
+    
+    // MARK: - Inventory Management
+
+    func reduceStock(productId: String, quantity: Int) async throws {
+        
+        let docRef = client.productsCollection.document(productId)
+        
+        do {
+           
+            try await client.db.runTransaction({ (transaction, errorPointer) -> Any? in
+                let sfDocument: DocumentSnapshot
+                do {
+                    sfDocument = try transaction.getDocument(docRef)
+                } catch let fetchError as NSError {
+                    errorPointer?.pointee = fetchError
+                    return nil
+                }
+                
+          
+                guard let oldStock = sfDocument.data()?["stock"] as? Int else {
+                    let error = NSError(
+                        domain: "AppError",
+                        code: 404,
+                        userInfo: [NSLocalizedDescriptionKey: "El producto con ID \(productId) no tiene un campo 'stock' válido en la colección Product."]
+                    )
+                    errorPointer?.pointee = error
+                    return nil
+                }
+                
+               
+                let newStock = max(0, oldStock - quantity)
+                
+               
+                transaction.updateData(["stock": newStock], forDocument: docRef)
+                return nil
+            })
+            
+           
+            
+        } catch {
+            print("Error en transacción de stock: \(error.localizedDescription)")
+            throw AppError.firestoreError("No se pudo actualizar el stock: \(error.localizedDescription)")
+        }
+    }
+    
 }

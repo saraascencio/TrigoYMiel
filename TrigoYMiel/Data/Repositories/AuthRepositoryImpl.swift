@@ -4,7 +4,9 @@
 //
 //  Created by Sara Ascencio on 31/3/26.
 //
+
 import Foundation
+import FirebaseAuth
 
 final class AuthRepositoryImpl: AuthRepository {
     
@@ -44,13 +46,52 @@ final class AuthRepositoryImpl: AuthRepository {
     }
     
     func currentUser() async throws -> User? {
+        
+        var user: User? = nil
+        
         if let localUser = try? sessionDataSource.getActiveSession() {
-            return localUser
+            user = localUser
+        } else {
+            user = try await remoteDataSource.currentUser()
         }
-        return try await remoteDataSource.currentUser()
+        
+
+        guard var currentUser = user else { return nil }
+     
+        if let firebaseAuthUser = Auth.auth().currentUser,
+           let verifiedEmail = firebaseAuthUser.email {
+            
+
+            if verifiedEmail != currentUser.email {
+                
+        
+                try await remoteDataSource.updateEmailInFirestore(userId: currentUser.id, newEmail: verifiedEmail)
+                
+            
+                currentUser = User(
+                    id:              currentUser.id,
+                    name:            currentUser.name,
+                    phone:           currentUser.phone,
+                    email:           verifiedEmail,
+                    role:            currentUser.role,
+                    tier:            currentUser.tier,
+                    isActive:        currentUser.isActive,
+                    registeredAt:    currentUser.registeredAt,
+                    fcmToken:        currentUser.fcmToken,
+                    wholesaleActive: currentUser.wholesaleActive
+                )
+                
+             
+                try? sessionDataSource.saveSession(currentUser)
+            }
+        }
+        
+        return currentUser
     }
+    
     
     func updateLocalSession(_ user: User) {
         try? sessionDataSource.saveSession(user)
     }
 }
+

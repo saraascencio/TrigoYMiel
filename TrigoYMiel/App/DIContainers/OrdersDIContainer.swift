@@ -12,21 +12,24 @@ final class OrderDIContainer {
     // Necesario para que PlaceOrderUseCase pueda limpiar el carrito tras la compra
     private let cartRepository: CartRepository
     
-    // Mantenemos una instancia única del repositorio de órdenes por eficiencia
+  
     private lazy var orderRepository: OrderRepository = {
         return OrderRepositoryImpl()
     }()
-
+    
     // MARK: - Initializer
     init(cartRepository: CartRepository) {
         self.cartRepository = cartRepository
     }
-
+    
+    private lazy var productRepository: ProductRepository = {
+            return ProductRepositoryImpl()
+        }()
     // MARK: - Repository Factory
     func makeOrderRepository() -> OrderRepository {
         return orderRepository
     }
-
+    
     // MARK: - Use Cases (Cliente)
     
     /// Regla Trigo y Miel: Solo se dispara si el carrito tiene productos.
@@ -43,16 +46,16 @@ final class OrderDIContainer {
     }
     
     func makeActiveOrdersViewModel(userId: String) -> ActiveOrdersViewModel {
-            ActiveOrdersViewModel(
-                userId:                userId,
-                getActiveOrdersUseCase: makeGetActiveOrdersUseCase()
-            )
+        ActiveOrdersViewModel(
+            userId:                userId,
+            getActiveOrdersUseCase: makeGetActiveOrdersUseCase()
+        )
     }
     
     func makeGetOrderHistoryUseCase() -> GetOrderHistoryUseCase {
         GetOrderHistoryUseCase(orderRepository: orderRepository)
     }
-
+    
     func makeOrderHistoryViewModel(userId: String) -> OrderHistoryViewModel {
         OrderHistoryViewModel(
             userId:                userId,
@@ -64,14 +67,23 @@ final class OrderDIContainer {
     func makeGetOrderDetailUseCase() -> GetOrderDetailUseCase {
         return GetOrderDetailUseCase(orderRepository: makeOrderRepository())
     }
-
+    
     // MARK: - Use Cases (Admin)
     
     func makeGetAllOrdersUseCase() -> GetAllOrdersUseCase {
         return GetAllOrdersUseCase(orderRepository: makeOrderRepository())
     }
     
+    
+        func makeProductRepository() -> ProductRepository {
+            return productRepository
+        }
+    
     func makeUpdateOrderStatusUseCase() -> UpdateOrderStatusUseCase {
-        return UpdateOrderStatusUseCase(orderRepository: makeOrderRepository())
+    
+        return UpdateOrderStatusUseCase(
+            orderRepository: makeOrderRepository(),
+            productRepository: makeProductRepository()
+        )
     }
 }

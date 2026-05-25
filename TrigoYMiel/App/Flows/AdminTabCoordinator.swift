@@ -70,7 +70,7 @@ struct AdminTabCoordinator: View {
                     let viewModel = diContainer.profileDIContainer
                                         .makeProfileViewModel()
                     
-                    ProfileView(viewModel: viewModel)
+                    ProfileView(onLogout: onLogout, viewModel: viewModel)
                         .onAppear {
                             Task { @MainActor in
                                 viewModel.loadUserData()

@@ -71,7 +71,7 @@ struct CatalogView: View {
                             Text("Bienvenido")
                                 .font(.title.bold())
                                 .foregroundColor(Color("ColorPrimary"))
-                            Text(isStoreOpen ? "¿Listo para tu pedido?" : "Abierto de 10:00am a 8:00pm")
+                            Text(isStoreOpen ? "¿Listo para tu pedido?" : "Abierto de 10:00am a 9:00pm")
                                 .font(.title2.bold())
                                 .foregroundColor(Color("ColorPrimary").opacity(isStoreOpen ? 1 : 0.6))
                         }

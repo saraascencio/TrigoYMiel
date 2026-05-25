@@ -47,4 +47,6 @@ protocol ProductRepository {
     func getAllCategories() async throws -> [ProductCategory]
     
     func getActivePromotions() async throws -> [Promotion]
+    
+    func reduceStock(productId: String, quantity: Int) async throws
 }

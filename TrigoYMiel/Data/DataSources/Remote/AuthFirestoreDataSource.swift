@@ -12,11 +12,11 @@ import FirebaseFirestore
 // Maneja Firebase Auth y el documento del usuario en la colección "usuarios".
 
 final class AuthFirestoreDataSource {
-
+    
     private let client = FirestoreClient.shared
-
+    
     // MARK: - Login
-
+    
     func login(email: String, password: String) async throws -> User {
         do {
             let result = try await client.auth.signIn(withEmail: email, password: password)
@@ -25,9 +25,9 @@ final class AuthFirestoreDataSource {
             throw mapAuthError(error)
         }
     }
-
+    
     // MARK: - Register
-
+    
     func register(
         name: String,
         phone: String,
@@ -37,7 +37,7 @@ final class AuthFirestoreDataSource {
         do {
             let result = try await client.auth.createUser(withEmail: email, password: password)
             let uid    = result.user.uid
-
+            
             let newUser = User(
                 id:              uid,
                 name:            name,
@@ -50,19 +50,19 @@ final class AuthFirestoreDataSource {
                 fcmToken:        nil,
                 wholesaleActive: false
             )
-
+            
             try await client.usersCollection
                 .document(uid)
                 .setData(UserMapper.toFirestore(newUser))
-
+            
             return newUser
         } catch let error as NSError {
             throw mapAuthError(error)
         }
     }
-
+    
     // MARK: - Logout
-
+    
     func logout() throws {
         do {
             try client.auth.signOut()
@@ -70,16 +70,16 @@ final class AuthFirestoreDataSource {
             throw AppError.unknown(error.localizedDescription)
         }
     }
-
+    
     // MARK: - Current user
-
+    
     func currentUser() async throws -> User? {
         guard let firebaseUser = client.auth.currentUser else { return nil }
         return try await fetchUser(id: firebaseUser.uid)
     }
-
+    
     // MARK: - Helpers (usados por ReferralRepositoryImpl)
-
+    
     func fetchUser(id: String) async throws -> User {
         do {
             let doc = try await client.usersCollection.document(id).getDocument()
@@ -91,7 +91,7 @@ final class AuthFirestoreDataSource {
             throw AppError.firestoreError(error.localizedDescription)
         }
     }
-
+    
     func updateWholesaleActive(userId: String, active: Bool) async throws {
         do {
             try await client.usersCollection
@@ -101,9 +101,9 @@ final class AuthFirestoreDataSource {
             throw AppError.firestoreError(error.localizedDescription)
         }
     }
-
+    
     // MARK: - Auth error mapping
-
+    
     private func mapAuthError(_ error: NSError) -> AppError {
         switch AuthErrorCode(rawValue: error.code) {
         case .wrongPassword, .invalidEmail, .invalidCredential:
@@ -119,5 +119,10 @@ final class AuthFirestoreDataSource {
         default:
             return .unknown(error.localizedDescription)
         }
+    }
+    
+    func updateEmailInFirestore(userId: String, newEmail: String) async throws {
+        let ref = FirestoreClient.shared.usersCollection.document(userId)
+        try await ref.updateData(["email": newEmail])
     }
 }

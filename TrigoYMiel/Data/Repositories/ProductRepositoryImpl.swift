@@ -93,8 +93,18 @@ final class ProductRepositoryImpl: ProductRepository {
         do {
             return try await remoteDataSource.getActivePromotions()
         } catch {
-            // fallback simple (puedes mejorar luego)
+            
             return []
+        }
+    }
+    
+    func reduceStock(productId: String, quantity: Int) async throws {
+       
+        try await remoteDataSource.reduceStock(productId: productId, quantity: quantity)
+        
+       
+        if let updatedProduct = try? await remoteDataSource.getProduct(id: productId) {
+            try? localDataSource.upsertProduct(updatedProduct)
         }
     }
 }

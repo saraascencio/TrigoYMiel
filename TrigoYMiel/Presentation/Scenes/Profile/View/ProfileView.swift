@@ -8,7 +8,8 @@ import SwiftUI
 import Combine
 
 struct ProfileView: View {
-
+    let onLogout: () -> Void
+    
     @StateObject var viewModel: ProfileViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -144,15 +145,32 @@ struct ProfileView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            Task { @MainActor in
-                viewModel.loadUserData()   // Necesitas agregar este método
-            }
+          
+                viewModel.loadUserData()   
+            
         }
-        .alert("Perfil actualizado",
-               isPresented: $viewModel.savedSuccess) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Tus datos han sido actualizados correctamente.")
+        .alert(
+            viewModel.verificationEmailSent
+                ? "Verifica tu nuevo email"
+                : "Perfil actualizado",
+            isPresented: $viewModel.savedSuccess
+        ) {
+            Button("OK", role: .cancel) {
+                    if viewModel.verificationEmailSent {
+                        
+                        viewModel.forceSignOut()
+                        onLogout()
+                    }
+                    viewModel.savedSuccess = false
+                    viewModel.verificationEmailSent = false
+                }
+        }
+        message: {
+            if viewModel.verificationEmailSent {
+                Text("Te enviamos un enlace al nuevo correo. El cambio se aplicará cuando lo confirmes.")
+            } else {
+                Text("Tus datos han sido actualizados correctamente.")
+            }
         }
         .alert("Error",
                isPresented: Binding(

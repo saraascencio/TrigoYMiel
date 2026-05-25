@@ -9,15 +9,20 @@ import Foundation
 final class AdminOrdersDIContainer {
 
     private let orderRepository: OrderRepository = OrderRepositoryImpl()
-
+    private let productRepository: ProductRepository = ProductRepositoryImpl()
+    
     func makeGetAllOrdersUseCase() -> GetAllOrdersUseCase {
         GetAllOrdersUseCase(orderRepository: orderRepository)
     }
 
     func makeUpdateOrderStatusUseCase() -> UpdateOrderStatusUseCase {
-        UpdateOrderStatusUseCase(orderRepository: orderRepository)
+            
+            UpdateOrderStatusUseCase(
+                orderRepository: orderRepository,
+                productRepository: productRepository
+            )
     }
-
+    
     func makeAdminOrdersViewModel() -> AdminOrdersViewModel {
         AdminOrdersViewModel(
             getAllOrdersUseCase:      makeGetAllOrdersUseCase(),
