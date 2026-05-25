@@ -1,26 +1,33 @@
-# Trigo y Miel 🍞
+# Trigo y Miel – Aplicación iOS 🍞
 
-**Trigo y Miel** es una aplicación móvil desarrollada para la gestión de una panadería local ficticia. Permite administrar productos, clientes y pedidos, facilitando tanto la operación interna como la experiencia de compra para distintos tipos de usuarios, ofreciendo una solución personalizada para el negocio.
+## Descripción del proyecto 
+Trigo y Miel es una aplicación móvil desarrollada en iOS que permite a los usuarios explorar un catálogo de productos de panadería local, gestionar pedidos, utilizar un sistema de referidos y acceder a funcionalidades diferenciadas según su rol (minorista o mayorista). También incluye un panel administrativo para la gestión de productos y pedidos.
+
+El sistema está diseñado con una arquitectura limpia y escalable, basada en Clean Architecture + MVVM, enfocada en la separación de responsabilidades, mantenibilidad y escalabilidad del código.
 
 ---
 
-## Credenciales de acceso (solo para pruebas)
+## Tecnologías utilizadas 
+- Lenguaje: Swift  
+- IDE: Xcode 26.3  
+- Sistema operativo de desarrollo: macOS 15.7.4  
+- Plataforma objetivo: iOS 16 o superior  
+- Arquitectura: Clean Architecture + MVVM  
 
-Las siguientes credenciales están destinadas únicamente para el uso en entorno de desarrollo y son temporales.
+---
 
-### Administrador
+## Roles del sistema 
+- Usuario minorista: compra con límites reducidos de productos.  
+- Usuario mayorista: acceso a mayores cantidades y promociones especiales.  
+- Administrador: gestión completa de productos y pedidos.  
 
-* **Email:** [walter@gmail.com](mailto:walter@gmail.com)
-* **Password:** 123456
+---
 
-### Cliente (Minorista)
-
-* **Email:** [isabel@gmail.com](mailto:isabel@gmail.com)
-* **Password:** 123456
-
-### Cliente (Mayorista)
-
-* **Email:** [kat@gmail.com](mailto:kat@gmail.com)
-* **Password:** 123456
-
-> **Nota:** Estas credenciales son temporales y no se utilizarán en producción.
+## Funcionalidades principales
+- Autenticación y perfil de usuario  
+- Catálogo y visualización de productos  
+- Carrito de compras  
+- Gestión de pedidos  
+- Sistema de referidos y promociones  
+- Panel de administración
+---
